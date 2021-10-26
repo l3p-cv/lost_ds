@@ -11,7 +11,7 @@ setuptools.setup(
     description="Lost Dataset library",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://gitlab.l3bm.com/daisy/lost_ds",
+    url="",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
