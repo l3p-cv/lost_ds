@@ -1,0 +1,1 @@
+from lost_ds.segmentation.semantic_seg import semantic_segmentation
