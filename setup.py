@@ -9,9 +9,10 @@ setuptools.setup(
     author="L3bm GmbH",
     author_email="info@l3bm.com",
     description="Lost Dataset library",
+    license="MIT",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="",
+    url="https://github.com/l3p-cv/lost_ds",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
