@@ -1,4 +1,4 @@
-from shapely.geometry import mapping, MultiPolygon, Polygon as Poly
+from shapely.geometry import mapping, MultiPolygon, Polygon as Poly, GeometryCollection
 import numpy as np
 import cv2
 
@@ -25,12 +25,22 @@ class Polygon(Geometry):
         new_polys = []
         if isinstance(intersection, MultiPolygon):
             new_polys = list(intersection)
+        elif isinstance(intersection, GeometryCollection):
+            # WARNING: Some shape-information could be lost.
+            new_polys = [i for i in intersection if 'polygon' in str(type(i))]
         else:
             new_polys = [intersection]
         
         for i, polygon in enumerate(new_polys):
-            new_poly = np.array(
-                mapping(polygon)['coordinates']) - [xmin, ymin]
+            # new_poly = np.array(mapping(polygon)['coordinates']) - [xmin, ymin]
+            try:
+                new_poly = np.array(mapping(polygon)['coordinates']) - [xmin, ymin]
+            except: # WARNING: The polygon has holes. Only the exterior coords
+                    #   of the polygon will be considered. Propably, the 
+                    #   annotation was to complex (e.g. self intersecting)
+                new_poly = np.array(polygon.exterior.coords) - [xmin, ymin]
+                # hole = np.array(polygon.interiors.coords) - [xmin, ymin]
+                
             new_polys[i] = new_poly.squeeze()
         
         return new_polys
