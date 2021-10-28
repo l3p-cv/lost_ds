@@ -168,13 +168,16 @@ class LOSTDataset(object):
     def keys(self):
         return self.df.keys()
     
-    # def __getitem__(self, name):
-    #     # enables getting value by 'ds[key]'
-    #     return self.df[name]
+    def __getitem__(self, name):
+        # enables getting value by 'ds[key]'
+        return self.df[name]
     
-    # def __getattr__(self, name: str):
-    #     # enable getting attributes with ds.attr
-    #     return self.df.__getattr__(name)
+    def __setitem__(self, key, value):
+        return self.df.__setitem__(key, value)
+    
+    def __getattr__(self, name: str):
+        # enable getting attributes with ds.attr
+        return self.df.__getattr__(name)
 
     
     #
