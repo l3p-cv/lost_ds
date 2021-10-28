@@ -44,7 +44,7 @@ class DSCropper:
             padding = ((0, 0), (0, 0))
         img_df = df[df['img_path']==img_path]
         assert max(crop_position) > 1, 'Crop position has to be absolute!'
-        crop_position = np.clip(crop_position, 0, [im_w, im_h, im_w, im_h])
+        # crop_position = np.clip(crop_position, 0, [im_w, im_h, im_w, im_h])
         crop_box = box(*crop_position)
         result_annos = []
         for idx, row in img_df.iterrows():
