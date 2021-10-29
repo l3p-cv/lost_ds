@@ -237,7 +237,7 @@ class LOSTDataset(object):
         return self._update_inplace(df, inplace)
     
     
-    def ignore_labels(self, labels, df=None, col='lbl', inplace=False):
+    def ignore_labels(self, labels, df=None, col='anno_lbl', inplace=False):
         ''' Remove dataframe entries where the given labels occures
 
         Args:
@@ -254,7 +254,7 @@ class LOSTDataset(object):
         return self._update_inplace(df, inplace)
     
     
-    def selection_mask(self, labels, df=None, col='lbl'):
+    def selection_mask(self, labels, df=None, col='anno_lbl'):
         '''Get mask for labels in dataset
         Args:
             df (pd.DataFrame): dataset to mask
@@ -284,7 +284,7 @@ class LOSTDataset(object):
         return self._update_inplace(df, inplace)
     
     
-    def is_multilabel(self, df=None, col='lbl'):
+    def is_multilabel(self, df=None, col='anno_lbl'):
         '''check if a column contains multilabels
 
         Args:
@@ -299,7 +299,7 @@ class LOSTDataset(object):
         return is_multilabel(df=df, col=col)
         
     
-    def label_selection(self, labels, df=None, col='lbl', inplace=False):
+    def label_selection(self, labels, df=None, col='anno_lbl', inplace=False):
         '''Get entries with a selection of labels from the dataframe
         Args:
             labels (list): list of labels to select
@@ -313,7 +313,7 @@ class LOSTDataset(object):
         return self._update_inplace(df, inplace)
     
     
-    def unique_labels(self, df=None, col='lbl'):
+    def unique_labels(self, df=None, col='anno_lbl'):
         '''Get unique dataset labels.
         Args:
             df (pd.DataFrame): dataframe to analyze
@@ -343,7 +343,7 @@ class LOSTDataset(object):
         df = remap_img_path(df, new_root_path, col)
         return self._update_inplace(df, inplace)
     
-    def remap_labels(self, label_mapping, df=None, col='lbl', 
+    def remap_labels(self, label_mapping, df=None, col='anno_lbl', 
                      dst_col='anno_lbl_mapped', inplace=False):
         '''Map the labels in a given col
         
@@ -461,7 +461,7 @@ class LOSTDataset(object):
         return split_by_img_path(test_size=test_size, val_size=val_size, df=df)
     
     
-    def split_multilabels(self, lbl_mapping, df=None, col='lbl', inplace=False):
+    def split_multilabels(self, lbl_mapping, df=None, col='anno_lbl', inplace=False):
         ''' Split multilabels column into multiple single label columns
         Args:
             df (pd.DataFrame): dataframe to split
