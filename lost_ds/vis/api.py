@@ -4,4 +4,5 @@ from lost_ds.vis.vis import (vis_and_store,
 from lost_ds.vis.geometries import (draw_boxes,
                                     draw_lines,
                                     draw_points,
-                                    draw_polygons)
+                                    draw_polygons,
+                                    draw_text)

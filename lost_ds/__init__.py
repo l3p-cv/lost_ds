@@ -37,7 +37,8 @@ from lost_ds.vis.api import (vis_sample,
                              draw_polygons,
                              draw_boxes,
                              draw_lines,
-                             draw_points)
+                             draw_points,
+                             draw_text)
 
 from lost_ds.segmentation.api import (semantic_segmentation)
 
