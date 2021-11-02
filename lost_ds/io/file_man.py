@@ -128,17 +128,19 @@ class FileMan(object):
     
     
     def load_dataset(self, ds):
+        
         if isinstance(ds, str):
             return self._load_dataset(ds)
         elif isinstance(ds, pd.DataFrame):
             return ds
-        elif isinstance(ds, list):
-            if isinstance(ds[0], str):
-                return pd.concat([self._load_dataset(path) for path in ds])
-            elif isinstance(ds[0], pd.DataFrame):
-                return pd.concat(ds)
         elif 'LOSTDataset' in str(type(ds)):
             return ds.df
+        elif ds is None:
+            return None
+        elif isinstance(ds, list):
+            return pd.concat([self.load_dataset(df) for df in ds])
+        else:
+            raise ValueError('Unkown input-type {}'.format(type(ds)))
             
             
     def _load_dataset(self, ds_path):
