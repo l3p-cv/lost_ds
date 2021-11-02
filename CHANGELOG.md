@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - dependencies for lost_ds in requirements.txt + setup.py
+- examples dataset and code-snippets
+- improved function to load datasets at LOSTDataset
 ## [0.0.0] - 2021-10-26
 ### Added
 - First version
