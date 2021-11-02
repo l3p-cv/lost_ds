@@ -63,11 +63,11 @@ class LOSTDataset(object):
         ''' Initialize LOSTDataset
         
         Args:
-            ds (str, list of str, pd.DataFrame, list of pd.DataFrame): 
-                Dataset(s) to use. Either path(s) or pd.DataFrame instance(s)
+            ds (str, pd.DataFrame, LOSTDataset, list(s)): 
+                Dataset(s) to use. The different types can be combined in lists.
             filesystem (fsspec.filesystem, None): Filesystem to use. If None the 
                 local filesystem will be used.
-                
+            
         '''
         self.fileman = FileMan(filesystem)
         self.df = self.fileman.load_dataset(ds)
