@@ -1,6 +1,5 @@
-from re import S
+from os import name
 import numpy as np
-import pandas as pd 
 
 from lost_ds.io.file_man import FileMan
 from lost_ds.geometry.api import LOSTGeometries
@@ -50,7 +49,6 @@ from lost_ds.segmentation.semantic_seg import (semantic_segmentation,
 from lost_ds.detection.detection import detection_dataset
 
 from lost_ds.util import get_fs, to_parquet
-
 
 
 class LOSTDataset(object):
@@ -175,10 +173,17 @@ class LOSTDataset(object):
     def __setitem__(self, key, value):
         return self.df.__setitem__(key, value)
     
-    def __getattr__(self, name: str):
-        # enable getting attributes with ds.attr
-        return self.df.__getattr__(name)
-
+    # def __getattr__(self, name: str):
+    #     # enable getting attributes with ds.attr
+    #     # if name.startswith('__') and name.endswith('__'):
+    #     #     raise ValueError
+    #     try:
+    #         return self.df.__getattr__(name)
+    #     except:
+    #         try:
+    #             return getattr(self, name)
+    #         except:
+    #             raise AttributeError(name)
     
     #
     #   Data copy
