@@ -49,7 +49,7 @@ def split_by_img_path(test_size=0.2, val_size=0.2, df=None):
     return tuple(splits)
 
 
-def split_multilabels(lbl_mapping, df=None, col='anno_lbl'):
+def split_multilabels(lbl_mapping, df:pd.DataFrame=None, col='anno_lbl'):
     ''' Split multilabels column into multiple single label columns
     Args:
         df (pd.DataFrame): dataframe to split
@@ -80,9 +80,12 @@ def split_multilabels(lbl_mapping, df=None, col='anno_lbl'):
                     raise Exception('Got multilabel for categorie {}. ' \
                                     'Found {}'.format(cat, ret[cat], lbl))
                 ret[cat] = lbl
-        return list(ret.values())
-            
+        ret = list(ret.values())
+        for lbl in labels:
+            assert lbl in ret
+        return ret
+    
     df[categories] = pd.DataFrame(list(df[col].apply(
-        lambda x: split_labels(x))), columns=categories)
+        lambda x: split_labels(x))), columns=categories, index=df.index)
     
     return df

@@ -67,15 +67,19 @@ def validate_img_paths(df, remove_invalid=True, filesystem=None):
     '''
     df = df.copy()
     fs = get_fs(filesystem)
-    valid_images = list(df.img_path.unique())
+    images = list(df.img_path.unique())
+    valid_images = []
     invalid_images = []
-    for image_path in valid_images:
-        if not fs.exists(image_path):
-            valid_images.remove(image_path)
+    for image_path in images:
+        exist = fs.exists(image_path)
+        if exist:
+            valid_images.append(image_path)
+        elif not exist:
             invalid_images.append(image_path)
+    assert len(valid_images) + len(invalid_images) == len(images)
     if len(invalid_images):
         if remove_invalid:
-            df = df[df.img_path.isin(valid_images)]
+            df = df[~df['img_path'].isin(invalid_images)]
         else:
             raise Exception('Some images do not exist! {}'.
                             format(invalid_images))
