@@ -18,8 +18,9 @@ def to_parquet(path, df, filesystem=None):
     fs = get_fs(filesystem)
     geom = LOSTGeometries()
     store_df = df.copy()
-    store_df.anno_data = store_df.anno_data.apply(lambda x: 
-        geom.serializable(x))
+    if 'anno_data' in df.keys():
+        store_df.anno_data = store_df.anno_data.apply(lambda x: 
+            geom.serializable(x))
     fs.write_dataset(store_df, path)
     
     

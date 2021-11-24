@@ -46,6 +46,9 @@ from lost_ds.cropping.cropping import (crop_dataset,
 from lost_ds.segmentation.semantic_seg import (semantic_segmentation,
                                                )
 
+from lost_ds.segmentation.anno_from_seg import (segmentation_to_lost,
+                                               )
+
 from lost_ds.detection.detection import detection_dataset
 
 from lost_ds.util import get_fs, to_parquet
@@ -71,8 +74,8 @@ class LOSTDataset(object):
         self.df = self.fileman.load_dataset(ds)
         try:
             self._parse_data()
-        except TypeError:
-            pass
+        except TypeError as e:
+            print(e)
         self.geom = LOSTGeometries()
         self.cropper = DSCropper(self.geom, self.fileman)
         
@@ -685,6 +688,28 @@ class LOSTDataset(object):
                                    lbl_col, dst_path_col, dst_lbl_col, 
                                    line_thickness, radius, self.fileman)
         return self._update_inplace(df, inplace)
+    
+    
+    def segmentation_to_lost(self, pixel_mapping, background=0, 
+                             seg_key='seg_path', df=None):
+        '''Create LOST-Annotations from semantic segmentations / pixelmaps 
+        
+        Args:
+            pixel_mapping (dict): mapping of pixel-value to anno_lbl, e.g. 
+                {0:'background', 1:'thing'}
+            background (int): pixel-value for background.
+            seg_key (str): dataframe key containing the paths to the stored 
+                pixelmaps
+            df (pd.DataFrame): dataframe to apply on
+            
+        Returns:
+            pd.DataFrame with polygon-annotations in LOSTDataset format
+        '''
+        df = self._get_df(df)
+        seg_df = segmentation_to_lost(df, pixel_mapping=pixel_mapping, 
+                                      background=background, seg_key=seg_key, 
+                                      filesystem=self.fileman)
+        return seg_df
     
     
     #
