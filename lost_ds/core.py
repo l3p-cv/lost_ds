@@ -40,7 +40,8 @@ from lost_ds.vis.vis import (vis_and_store,
                              )
 
 from lost_ds.cropping.cropping import (crop_dataset,
-                                       DSCropper
+                                       DSCropper,
+                                       crop_components,
                                        )
 
 from lost_ds.segmentation.semantic_seg import (semantic_segmentation,
@@ -642,7 +643,41 @@ class LOSTDataset(object):
         """
         df = self._get_df(df)
         return self.cropper.crop_anno(img_path, df, crop_position, im_w, im_h)
-        
+    
+    
+    def crop_components(self, dst_dir, base_labels, lbl_col, context, df=None,
+                        context_alignment=None, min_size=None, 
+                        anno_dtype=['polygon'], inplace=False):
+        """Crop the entire dataset with fixed crop-shape
+
+        Args:
+            df (pd.DataFrame): dataframe to apply bbox typecast
+            dst_dir (str): Directory to store the new dataset
+            base_labels (list of str): labels to align the crops 
+            lbl_col (str): column holding the labels
+            context (float, tuple of floats): context to add to each component for 
+                cropping (twice -> left/right, top/bottom). If tuple of float: uses 
+                the given floats as fraction of the components (H, W) to calculate 
+                the added contexts. 
+            context_alignment (str): Define alignment of the crop-context. One of 
+                [None, 'max', 'min', 'flip']. 
+                None: Use H/W-context in H/W-dimension
+                max: use maximum of H-context, W-context for both dimensions
+                min: use minimum of H-context, W-context for both dimensions
+                flip: use H-context in W-dimension and vice versa. This makes the 
+                    crop a little bit more squarish shaped
+            min_size (int, tuple of int): minimum size of produced crops in both
+                dimensions if int or for (H, W) if tuple of int
+            anno_dtype (list of str): dtype to apply on
+                
+        Returns:
+            pd.DataFrame
+        """
+        df = self._get_df(df)
+        df = crop_components(df, dst_dir, base_labels, lbl_col, context, 
+                             context_alignment, min_size, anno_dtype, 
+                             self.fileman)
+        return self._update_inplace(df, inplace)
         
     #
     #   Segmentation
@@ -691,7 +726,7 @@ class LOSTDataset(object):
     
     
     def segmentation_to_lost(self, pixel_mapping, background=0, 
-                             seg_key='seg_path', df=None):
+                             seg_key='seg_path', df=None, inplace=False):
         '''Create LOST-Annotations from semantic segmentations / pixelmaps 
         
         Args:
@@ -706,10 +741,10 @@ class LOSTDataset(object):
             pd.DataFrame with polygon-annotations in LOSTDataset format
         '''
         df = self._get_df(df)
-        seg_df = segmentation_to_lost(df, pixel_mapping=pixel_mapping, 
+        df = segmentation_to_lost(df, pixel_mapping=pixel_mapping, 
                                       background=background, seg_key=seg_key, 
                                       filesystem=self.fileman)
-        return seg_df
+        return self._update_inplace(df, inplace)
     
     
     #
