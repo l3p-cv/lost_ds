@@ -26,22 +26,15 @@ class Polygon(Geometry):
         if isinstance(intersection, MultiPolygon):
             new_polys = list(intersection)
         elif isinstance(intersection, GeometryCollection):
-            # WARNING: Some shape-information could be lost.
             new_polys = [i for i in intersection if 'polygon' in str(type(i))]
         else:
             new_polys = [intersection]
         
         for i, polygon in enumerate(new_polys):
-            # new_poly = np.array(mapping(polygon)['coordinates']) - [xmin, ymin]
-            try:
-                new_poly = np.array(mapping(polygon)['coordinates']) - [xmin, ymin]
-            except: # WARNING: The polygon has holes. Only the exterior coords
-                    #   of the polygon will be considered. Propably, the 
-                    #   annotation was to complex (e.g. self intersecting)
-                new_poly = np.array(polygon.exterior.coords) - [xmin, ymin]
-                # hole = np.array(polygon.interiors.coords) - [xmin, ymin]
-                
-            new_polys[i] = new_poly.squeeze()
+            for p in mapping(polygon)['coordinates']:
+                new_polys[i] = np.array(p).squeeze() - [xmin, ymin]
+            
+        new_polys = [p for p in new_polys if self.validate(p)]
         
         return new_polys
         
