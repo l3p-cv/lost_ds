@@ -41,7 +41,7 @@ def to_abs(df, filesystem:Union[FileMan,fsspec.AbstractFileSystem]=None):
                             for idx, row in tqdm(df_rel[cols].iterrows(), 
                                                  total=len(df_rel),
                                                  desc='to abs'))
-    df.loc[df.anno_format != 'abs', 'anno_data'] = abs_data
+    df.loc[df.anno_format != 'abs', 'anno_data'] = pd.Series(abs_data)
     df['anno_format'] = 'abs'
     return df
 
@@ -77,7 +77,7 @@ def to_rel(df, filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None):
                             for idx, row in tqdm(df_abs[cols].iterrows(), 
                                                  total=len(df_abs),
                                                  desc='to rel'))
-    df.loc[df.anno_format != 'rel', 'anno_data'] = rel_data
+    df.loc[df.anno_format != 'rel', 'anno_data'] = pd.Series(rel_data)
     df['anno_format'] = 'rel'
     return df
 
@@ -111,7 +111,7 @@ def transform_bbox_style(dst_style, df):
         new_style.append(style)
     df_bbox.anno_data = new_data
     df_bbox.anno_style = new_style
-    df.loc[df.anno_dtype == 'bbox'] = df_bbox
+    df.loc[df.anno_dtype == 'bbox'] = pd.Series(df_bbox)
     return df
 
 
