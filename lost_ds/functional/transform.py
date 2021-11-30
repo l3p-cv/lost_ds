@@ -41,7 +41,8 @@ def to_abs(df, filesystem:Union[FileMan,fsspec.AbstractFileSystem]=None):
                             for idx, row in tqdm(df_rel[cols].iterrows(), 
                                                  total=len(df_rel),
                                                  desc='to abs'))
-    df.loc[df.anno_format != 'abs', 'anno_data'] = pd.Series(abs_data)
+    df.loc[df.anno_format != 'abs', 'anno_data'] = pd.Series(abs_data, 
+                                                             index=df_rel.index)
     df['anno_format'] = 'abs'
     return df
 
@@ -77,7 +78,8 @@ def to_rel(df, filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None):
                             for idx, row in tqdm(df_abs[cols].iterrows(), 
                                                  total=len(df_abs),
                                                  desc='to rel'))
-    df.loc[df.anno_format != 'rel', 'anno_data'] = pd.Series(rel_data)
+    df.loc[df.anno_format != 'rel', 'anno_data'] = pd.Series(rel_data, 
+                                                             index=df_abs.index)
     df['anno_format'] = 'rel'
     return df
 
