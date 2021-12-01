@@ -377,27 +377,29 @@ class LOSTDataset(object):
     #   Transformation
     #
     
-    def to_abs(self, df=None, inplace=False):
+    def to_abs(self, df=None, verbose=True, inplace=False):
         ''' Transform dataframe to absolute data
         
         Args:
             df (pd.DataFrame): dataframe to transform
+            verbose (bool): print tqdm progress-bar
             inplace (bool): overwrite self.df
         '''
         df = self._get_df(df)
-        df = to_abs(df, self.fileman)
+        df = to_abs(df, self.fileman, verbose)
         return self._update_inplace(df, inplace)
     
     
-    def to_rel(self, df=None, inplace=False):
+    def to_rel(self, df=None, verbose=True, inplace=False):
         ''' Transform dataframe to relative data
         
         Args:
             df (pd.DataFrame): dataframe to transform
+            verbose (bool): print tqdm progress-bar
             inplace (bool): overwrite self.df
         '''
         df = self._get_df(df)
-        df = to_rel(df, self.fileman)
+        df = to_rel(df, self.fileman, verbose)
         self._update_inplace(df, inplace)
     
     

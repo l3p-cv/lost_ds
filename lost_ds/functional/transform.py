@@ -10,13 +10,15 @@ from lost_ds.geometry.api import LOSTGeometries
 from lost_ds.im_util import get_imagesize
 from lost_ds.io.file_man import FileMan
         
-def to_abs(df, filesystem:Union[FileMan,fsspec.AbstractFileSystem]=None):
+def to_abs(df, filesystem:Union[FileMan,fsspec.AbstractFileSystem]=None, 
+           verbose=True):
     ''' Transform all annos to absolute annos
     
     Args:
         df (pd.DataFrame): dataframe to transform
         filesystem (fsspec.filesystem, FileMan): filesystem to use. Use local
             if not initialized
+        verbose (bool): print tqdm progress-bar
             
     Returns:
         pd.DataFrame: transformed dataframe wil absolute annotations
@@ -40,20 +42,23 @@ def to_abs(df, filesystem:Union[FileMan,fsspec.AbstractFileSystem]=None):
     abs_data = Parallel(-1)(delayed(make_abs)(row)
                             for idx, row in tqdm(df_rel[cols].iterrows(), 
                                                  total=len(df_rel),
-                                                 desc='to abs'))
+                                                 desc='to abs', 
+                                                 disable=(not verbose)))
     df.loc[df.anno_format != 'abs', 'anno_data'] = pd.Series(abs_data, 
                                                              index=df_rel.index)
     df['anno_format'] = 'abs'
     return df
 
 
-def to_rel(df, filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None):
+def to_rel(df, filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None,
+           verbose=True):
     ''' Transform all annos to absolute annos
     
     Args:
         df (pd.DataFrame): dataframe to transform
         filesystem (FileMan): Filesystem instance. If None local filesystem 
             is used
+        verbose (bool): print tqdm progress-bar
             
     Returns:
         pd.DataFrame: transformed dataframe wil absolute annotations
@@ -77,7 +82,8 @@ def to_rel(df, filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None):
     rel_data = Parallel(-1)(delayed(make_rel)(row) 
                             for idx, row in tqdm(df_abs[cols].iterrows(), 
                                                  total=len(df_abs),
-                                                 desc='to rel'))
+                                                 desc='to rel',
+                                                 disable=(not verbose)))
     df.loc[df.anno_format != 'rel', 'anno_data'] = pd.Series(rel_data, 
                                                              index=df_abs.index)
     df['anno_format'] = 'rel'
