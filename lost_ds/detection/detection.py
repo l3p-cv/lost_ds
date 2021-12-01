@@ -42,7 +42,7 @@ def detection_dataset(df, lbl_col='anno_lbl', det_col='det_lbl',
     '''
     fs = get_fs(filesystem)
     df = validate_empty_images(df)
-    df = validate_img_paths(df, False, filesystem=fs)
+    # df = validate_img_paths(df, False, filesystem=fs)
     df = validate_single_labels(df, lbl_col, det_col)
     bbox_df = df[df['anno_dtype'] == 'bbox']
     bbox_df = to_abs(bbox_df, fs)
