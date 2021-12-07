@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changes
+- `validate_unique_annos` uses data-hash for dropping duplicates now
 ### Added
 - dependencies for lost_ds in requirements.txt + setup.py
 - examples dataset and code-snippets
