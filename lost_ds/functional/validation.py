@@ -28,9 +28,9 @@ def validate_unique_annos(df):
         pd.DataFrame: dataframe with validated empty images
     '''
     df = df.copy()
-    df['hashable_data'] = df.anno_data.apply(lambda x: str(x))
-    df = df.drop_duplicates(['img_path', 'hashable_data'])
-    return df.drop('hashable_data', 'columns')
+    df['data_hash'] = df.anno_data.apply(lambda x: hash(str(x)))
+    df = df.drop_duplicates(['img_path', 'data_hash'])
+    return df.drop('data_hash', 'columns')
 
 
 def validate_geometries(df, remove_invalid=True):
