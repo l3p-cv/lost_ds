@@ -48,7 +48,7 @@ def vis_sample(img, df, line_thickness=3, color=(0, 0, 255), lbl_col='anno_lbl',
             thickness = 0.002*img.shape[0]
         else: 
             thickness = line_thickness
-        
+        thickness = max(1, thickness)
         img = geom.draw(img, anno_data, anno_conf, anno_lbl, anno_dtype, 
                         anno_style, anno_format, thickness, color, radius)
             
