@@ -35,6 +35,7 @@ from lost_ds.im_util import (get_imagesize,
 
 from lost_ds.vis.api import (vis_sample,
                              vis_and_store,
+                             vis_semantic_segmentation,
                              draw_polygons,
                              draw_boxes,
                              draw_lines,
