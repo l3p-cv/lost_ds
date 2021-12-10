@@ -1,2 +1,4 @@
 **__pycache__
 **dask-worker-space
+**launch.json
+.vscode

@@ -77,7 +77,7 @@ class LOSTDataset(object):
         try:
             self._parse_data()
         except TypeError as e:
-            print(e)
+            pass
         self.geom = LOSTGeometries()
         self.cropper = DSCropper(self.geom, self.fileman)
         
@@ -666,9 +666,9 @@ class LOSTDataset(object):
         return self.cropper.crop_anno(img_path, df, crop_position, im_w, im_h)
     
     
-    def crop_components(self, dst_dir, base_labels, lbl_col, context, df=None,
-                        context_alignment=None, min_size=None, 
-                        anno_dtype=['polygon'], inplace=False):
+    def crop_components(self, dst_dir, base_labels=-1, lbl_col='anno_lbl', 
+                        context=0, df=None, context_alignment=None, 
+                        min_size=None, anno_dtype=['polygon'], inplace=False):
         """Crop the entire dataset with fixed crop-shape
 
         Args:
