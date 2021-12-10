@@ -13,7 +13,8 @@ from lost_ds.util import get_fs
 def detection_dataset(df, lbl_col='anno_lbl', det_col='det_lbl', 
                       bbox_style='x1y1x2y2', use_empty_images=False, 
                       filesystem=None):
-    '''Prepare all bboxes to use them for detection CNN training
+    '''Prepare all bboxes with commonly required operations to use them for 
+       detection CNN training
     Args:
         df (pd.DataFrame): Dataframe containing bbox annotations
         lbl_col (str): column name where the anno labels are located (single 

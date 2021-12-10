@@ -2,6 +2,8 @@ import os
 
 from tqdm import tqdm
 from joblib import Parallel, delayed
+import seaborn as sns
+import numpy as np 
 
 from lost_ds.util import get_fs
 from lost_ds.geometry.lost_geom import LOSTGeometries
@@ -41,15 +43,20 @@ def vis_sample(img, df, line_thickness=3, color=(0, 0, 255), lbl_col='anno_lbl',
         anno_dtype = list(df['anno_dtype'])
         anno_style = list(df['anno_style'])
         anno_format = list(df['anno_format'])
-            
+        
+        if line_thickness == 'auto':
+            thickness = 0.002*img.shape[0]
+        else: 
+            thickness = line_thickness
+        
         img = geom.draw(img, anno_data, anno_conf, anno_lbl, anno_dtype, 
-                        anno_style, anno_format, line_thickness, color, radius)
+                        anno_style, anno_format, thickness, color, radius)
             
     return img
 
 
 def vis_and_store(df, out_dir, lbl_col='anno_lbl', color=(0, 0, 255), 
-                  line_thickness=2, filesystem=None, radius=2):
+                  line_thickness='auto', filesystem=None, radius=2):
     '''Visualize annotations and store them to a folder
 
     Args:
@@ -88,37 +95,36 @@ def vis_and_store(df, out_dir, lbl_col='anno_lbl', color=(0, 0, 255),
     #     vis_img(path, df_vis) 
     
 
-# TODO: reimplement 
-# def vis_semantic_segmentation(self, n_classes, out_dir, df=None):
-#     """Visualize the semantic segmentations from dataset by coloring it
+def vis_semantic_segmentation(df, out_dir, n_classes, palette='dark', 
+                              seg_path_col='seg_path', filesystem=None):
+    """Visualize the stored semantic segmentations by coloring it
     
-#     Args:
-#         n_classes (int): number of classes occuring in pixelmaps
-#         out_dir (str): path to store images
-#         df (pandas.DataFrame): The DataFrame that contains annoations to 
-#             visualize. If df is None a random image from self.df will be 
-#             sampled.
+    Args:
+        df (pandas.DataFrame): The DataFrame that contains annoations to 
+            visualize. 
+        out_dir (str): path to store images
+        n_classes (int): number of classes occuring in pixelmaps, number of 
+            different colors needed for visualization
+        palette (str): seaborn color palette i.e. 'dark', 'bright', 'pastel',...
+            refer https://seaborn.pydata.org/tutorial/color_palettes.html 
+        filesystem (fsspec.filesystem, FileMan): filesystem to use. Use local
+            if not initialized
+    """
+    fs = get_fs(filesystem)
+    fs.makedirs(out_dir, exist_ok=True)
     
-#     Returns:
-#         None
-#     """
-#     if df is None:
-#         df = self.df
+    palette = sns.color_palette(palette, n_classes)
+    palette = [(np.array(x)*255).astype(np.uint8) for x in palette]
 
-#     os.makedirs(out_dir, exist_ok=True)
-#     palette = sns.color_palette('dark', n_classes)
-#     palette = [(np.array(x)*256).astype(np.uint8) for x in palette]
+    segmentations = df[seg_path_col].unique()
 
-#     segmentations = df['mask.path'].unique()
-
-#     # def vis_seg(k, seg_path):
-#     for k, seg_path in enumerate(segmentations):
-#         print_progress_bar(k+1, len(segmentations), 'vis. sem. seg.:')
-#         seg = cv2.imread(seg_path)
-#         vis = np.zeros(seg.shape[:2]+(3,))
-#         for i in range(n_classes):
-#             vis = np.where(seg==i, palette[i], vis)
-#         cv2.imwrite(os.path.join(out_dir, seg_path.split('/')[-1]), vis)
-    
-#     # Parallel(mp.cpu_count())(delayed(vis_seg)(k, path) for k, path in enumerate(segmentations))
+    def vis_seg(seg_path):
+        seg = fs.read_img(seg_path)
+        vis = np.zeros(seg.shape[:2] + (3,))
+        for i in range(n_classes):
+            vis = np.where(seg==i, palette[i], vis)
+        fs.write_img(vis, os.path.join(out_dir, seg_path.split('/')[-1]))
+        
+    Parallel(n_jobs=-1)(delayed(vis_seg)(seg_path) 
+            for seg_path in tqdm(segmentations, desc='vis sem. seg.'))
     
