@@ -36,7 +36,8 @@ from lost_ds.copy import (copy_imgs,
                           )
 
 from lost_ds.vis.vis import (vis_and_store,
-                             vis_sample
+                             vis_sample,
+                             vis_semantic_segmentation,
                              )
 
 from lost_ds.cropping.cropping import (crop_dataset,
@@ -584,7 +585,7 @@ class LOSTDataset(object):
     #
     
     def vis_and_store(self, out_dir, df=None, lbl_col='anno_lbl', 
-                      color=(0, 0, 255), line_thickness=3, radius=2):
+                      color=(0, 0, 255), line_thickness='auto', radius=2):
         '''Visualize annotations and store them to a folder
 
         Args:
@@ -600,7 +601,25 @@ class LOSTDataset(object):
         df = self._get_df(df)
         vis_and_store(df, out_dir, lbl_col, color, line_thickness, self.fileman,
                       radius)
-        
+    
+    
+    def vis_semantic_segmentation(self, out_dir, n_classes, palette='dark', 
+                                  seg_path_col='seg_path', df=None):
+        """Visualize the stored semantic segmentations by coloring it
+    
+        Args:
+            out_dir (str): path to store images
+            n_classes (int): number of classes occuring in pixelmaps, number of 
+                different colors needed for visualization
+            palette (str): seaborn color palette i.e. 'dark', 'bright', 'pastel',...
+                refer https://seaborn.pydata.org/tutorial/color_palettes.html 
+            df (pandas.DataFrame): The DataFrame that contains annoations to 
+                visualize. 
+        """
+        df = self._get_df(df)
+        vis_semantic_segmentation(df, out_dir, n_classes, palette, seg_path_col, 
+                                  self.fileman)
+
 
     #
     #   Cropping
