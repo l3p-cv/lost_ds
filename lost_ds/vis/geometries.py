@@ -7,6 +7,36 @@ import cv2
 #   draw text
 #
 
+H_MAX_FRAC = 0.05
+W_MAX_FRAC = 0.3
+
+def calculate_text(text, thickness, img_h):
+    # calculate fontscale when text is 5% of img-height
+    fontscale = cv2.getFontScaleFromHeight(cv2.FONT_HERSHEY_SIMPLEX, 
+                                           max(int(H_MAX_FRAC * img_h), 10), 
+                                           thickness)
+    
+    (text_w, text_h), baseline = cv2.getTextSize(text,
+                                                cv2.FONT_HERSHEY_SIMPLEX,
+                                                fontscale, 
+                                                thickness)
+    return text_w, text_h, baseline, fontscale
+
+
+
+def get_text_size(text, max_width, max_height, thickness):
+    text_w, text_h, baseline, fontscale = calculate_text(text, thickness, 
+                                                         max_height/H_MAX_FRAC)
+    if text_w > max_width:
+       dst_w_frac = max_width / text_w
+       dst_h = text_h * dst_w_frac
+       text_w, text_h, baseline, fontscale = calculate_text(text, thickness, 
+                                                            dst_h/H_MAX_FRAC)
+    
+    return text_w, text_h, baseline, fontscale
+
+
+
 def draw_text(img, text, x, y, color, thickness=2):
     '''Draw text onto an image
     Args:
@@ -25,14 +55,11 @@ def draw_text(img, text, x, y, color, thickness=2):
     if text is None:
         return img
     
-    # calculate fontscale when text is 5% of img-height
-    fontscale = cv2.getFontScaleFromHeight(cv2.FONT_HERSHEY_SIMPLEX, 
-                                           int(0.05 * img.shape[0]), 
-                                           thickness)
-    (text_w, text_h), baseline = cv2.getTextSize(text,
-                                                cv2.FONT_HERSHEY_SIMPLEX,
-                                                fontscale, 
-                                                thickness)
+    text_w, text_h, baseline, fontscale = get_text_size(text,
+                                                        img.shape[1]*W_MAX_FRAC, 
+                                                        img.shape[0]*H_MAX_FRAC, 
+                                                        thickness)
+    
     ymin = y - text_h - baseline - thickness
     if ymin < 0:
         y += abs(ymin)
