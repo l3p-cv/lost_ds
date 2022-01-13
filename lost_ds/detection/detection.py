@@ -45,10 +45,10 @@ def detection_dataset(df, lbl_col='anno_lbl', det_col='det_lbl',
     df = validate_empty_images(df)
     # df = validate_img_paths(df, False, filesystem=fs)
     df = validate_single_labels(df, lbl_col, det_col)
-    bbox_df = df[df['anno_dtype'] == 'bbox']
+    non_empty_df, empty_df = split_by_empty(df)
+    bbox_df = non_empty_df[non_empty_df['anno_dtype'] == 'bbox']
     bbox_df = to_abs(bbox_df, fs, verbose=False)
     bbox_df = transform_bbox_style(dst_style=bbox_style, df=bbox_df)
-    bbox_df, empty_df = split_by_empty(bbox_df)
     empty_df.drop_duplicates(subset=['img_path'], inplace=True)
     
     if use_empty_images:            
