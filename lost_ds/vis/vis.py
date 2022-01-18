@@ -2,7 +2,10 @@ import os
 
 from tqdm import tqdm
 from joblib import Parallel, delayed
-import seaborn as sns
+try:
+    import seaborn as sns
+except:
+    pass
 import numpy as np 
 
 from lost_ds.util import get_fs
