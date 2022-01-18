@@ -131,7 +131,7 @@ def draw_points(img, data, text, color=(0, 0, 255), radius=2,
     return img
 
 
-def draw_polygons(img, data, text, color=(0, 0, 255), line_thickness=2):
+def draw_polygons(img, data, text, color=(0, 0, 255), line_thickness=2, offset=None):
     '''Draw polygons onto the given image
 
     Args:
@@ -152,6 +152,8 @@ def draw_polygons(img, data, text, color=(0, 0, 255), line_thickness=2):
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         
     for poly, txt, c in zip(data, text, color):
+        if offset is not None and isinstance(offset, (list, tuple, np.ndarray)):
+            poly = poly + offset
         y_values = poly[:, 1]
         txt_y_i = np.argmin(y_values)
         txt_x = poly[txt_y_i][0]
