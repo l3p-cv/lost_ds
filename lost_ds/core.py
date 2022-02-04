@@ -511,7 +511,7 @@ class LOSTDataset(object):
             None or pd.DataFrame
         '''
         df = self._get_df(df)
-        validate_geometries(df, remove_invalid)
+        df = validate_geometries(df, remove_invalid)
         return self._update_inplace(df, inplace)
 
 
