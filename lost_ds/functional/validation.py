@@ -47,7 +47,7 @@ def validate_geometries(df, remove_invalid=True):
     valid_mask = df[['anno_data', 'anno_dtype']].apply(
         lambda x: geom.validate(*x), axis=1)
     if remove_invalid:
-        df = df[~valid_mask]
+        df = df[valid_mask]
     else:
         if False in valid_mask:
             raise Exception('Found invalid geometries! {}'.
