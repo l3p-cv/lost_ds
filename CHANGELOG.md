@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new function `segmentation_to_lost` to convert pixelmaps to lost-annotations
 - new function `crop_components` to crop dataset based on annotations
 - new function `vis_semantic_segmentation` to color sem-seg. dataset
+- new function `to_coco` to generate and store coco datasets from LOSTDataset
+
 ## [0.0.0] - 2021-10-26
 ### Added
 - First version
