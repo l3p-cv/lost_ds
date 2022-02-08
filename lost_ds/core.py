@@ -23,7 +23,7 @@ from lost_ds.functional.filter import (remove_empty,
                                        unique_labels)
 
 from lost_ds.functional.transform import (polygon_to_bbox,
-                                          to_abs,
+                                          to_abs, to_coco,
                                           to_rel,
                                           transform_bbox_style)
 
@@ -194,16 +194,19 @@ class LOSTDataset(object):
     #   Data copy
     #
     
-    def copy_imgs(self, out_dir, df=None, col='img_path'):
+    def copy_imgs(self, out_dir, df=None, col='img_path', copy_path=None, 
+                  force_overwrite=False):
         '''Copy all images of dataset into out_dir
 
         Args:
             df (pd.DataFrame): dataframe to copy
             out_dir (str): Destination folder to store images
+            copy_path (str, optional): directory where to copy all images
             col (str): column containing paths to files
         '''
         df = self._get_df(df)
-        copy_imgs(df=df, out_dir=out_dir, col=col, filesystem=self.fileman)
+        copy_imgs(df=df, out_dir=out_dir, col=col, copy_path=copy_path,
+                  force_overwrite=force_overwrite, filesystem=self.fileman)
             
     
     def pack_ds(self, out_dir, df=None, cols=['img_path', 'mask_path'], 
@@ -436,6 +439,34 @@ class LOSTDataset(object):
         df = transform_bbox_style(dst_style, df)
         return self._update_inplace(df, inplace)
         
+        
+    def to_coco(self, df=None, remove_invalid=True, lbl_col='anno_lbl', 
+                supercategory_mapping=None, copy_path=None, json_path=None,
+                rename_by_index=False):
+        """Transform dataset to coco data format
+
+        Args:
+            df ([pd.DataFrame], optional): dataframe to apply transform
+            remove_invalid (bool, optional): Remove invalid image-paths. Defaults to True.
+            lbl_col (str, optional): dataframe column to look for labels. Defaults to 'anno_lbl'.
+            supercategory_mapping ([type], optional): dict like mapping for supercategories ({class: superclass}). 
+                Defaults to None.
+            copy_path (str, optional): copy all images to given directory
+            rename_by_index (bool, optional): rename files by index to assure unique filenames
+            json_path (str, optional): store coco annotations as .json file 
+
+        Returns:
+            dict: dict containing coco data like {'categories': [...], 'images': [...], 'annotations': [...]}
+        """
+        df = self._get_df(df)
+        coco_annos = to_coco(df, remove_invalid=remove_invalid, lbl_col=lbl_col, 
+                             supercategory_mapping=supercategory_mapping, 
+                             copy_path=copy_path, 
+                             rename_by_index=rename_by_index, 
+                             json_path=json_path,
+                             filesystem=self.fileman)
+        return coco_annos
+    
     
     #
     #   Splitting

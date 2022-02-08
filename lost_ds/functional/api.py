@@ -22,7 +22,8 @@ from lost_ds.functional.validation import (validate_empty_images,
 from lost_ds.functional.transform import (to_abs, 
                                           to_rel,
                                           transform_bbox_style,
-                                          polygon_to_bbox)
+                                          polygon_to_bbox,
+                                          to_coco)
 
 from lost_ds.functional.mapping import (remap_img_path,
                                         remap_labels)
