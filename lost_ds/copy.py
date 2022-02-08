@@ -7,7 +7,7 @@ from lost_ds.functional.mapping import remap_img_path
 from lost_ds.util import get_fs
 
 
-def copy_imgs(df, out_dir, col='img_path', 
+def copy_imgs(df, out_dir, col='img_path', force_overwrite=False, 
               filesystem=None):
     '''Copy all images of dataset into out_dir
 
@@ -21,8 +21,9 @@ def copy_imgs(df, out_dir, col='img_path',
     fs = get_fs(filesystem)
     def copy_file(src_path):
         dst_path = os.path.join(out_dir, os.path.basename(src_path))
-        if not fs.exists(dst_path):
-            fs.copy(src_path, dst_path)
+        if fs.exists(dst_path) and not force_overwrite:
+            return
+        fs.copy(src_path, dst_path)
         
     fs.makedirs(out_dir, exist_ok=True)
     img_paths = list(df[col].unique())
