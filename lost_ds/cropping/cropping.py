@@ -189,12 +189,12 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
         else: 
             return None
     
-    # crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, df) 
-    #                                 for path, df in tqdm(df.groupby('img_path'), 
-    #                                                  desc='crop dataset'))
+    crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, df) 
+                                    for path, df in tqdm(df.groupby('img_path'), 
+                                                     desc='crop dataset'))
     
-    crop_dfs = []
-    for path, df in tqdm(df.groupby('img_path'), desc='crop dataset'):
-        crop_dfs.append(crop_and_recalculate(path, df))
+    # crop_dfs = []
+    # for path, df in tqdm(df.groupby('img_path'), desc='crop dataset'):
+    #     crop_dfs.append(crop_and_recalculate(path, df))
                                     
     return pd.concat(crop_dfs)

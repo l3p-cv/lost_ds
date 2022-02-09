@@ -153,6 +153,11 @@ def polygon_to_bbox(df, dst_style=None):
     return df
 
 
+# TODO: enable results format - idstinguish between gt and results
+# TODO: allow iscrowd 
+# TODO: implement segmentation to RLE for iscrowd==1 and results format
+# TODO: add score for results format
+# TODO: enable panoptic segmentation
 def to_coco(df, remove_invalid=True, lbl_col='anno_lbl', 
             supercategory_mapping=None, copy_path=None, rename_by_index=False,
             json_path=None,
@@ -174,7 +179,6 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     Returns:
         dict: containing coco data like {'categories': [...], 'images': [...], 'annotations': [...]}
     """
-    
     df = validate_img_paths(df, remove_invalid, filesystem)
     df = transform_bbox_style('xywh', df)
     df = to_abs(df, filesystem)
