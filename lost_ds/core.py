@@ -730,7 +730,7 @@ class LOSTDataset(object):
         df = self._get_df(df)
         df = crop_components(df, dst_dir, base_labels, lbl_col, context, 
                              context_alignment, min_size, anno_dtype, 
-                             center_lbl_key=center_lbl_key, self.fileman)
+                             center_lbl_key, self.fileman)
         return self._update_inplace(df, inplace)
         
     #
