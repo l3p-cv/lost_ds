@@ -139,7 +139,9 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
     min_size_y = min_size_x = 0
     if not isinstance(min_size, int) and min_size is not None:
         min_size_y, min_size_x = min_size
-            
+    if isinstance(min_size, int):
+        min_size_x = min_size_y = min_size
+    
     def crop_and_recalculate(img_path, img_df):
         if base_labels == -1:
             base_df = img_df
