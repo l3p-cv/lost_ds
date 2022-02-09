@@ -699,7 +699,8 @@ class LOSTDataset(object):
     
     def crop_components(self, dst_dir, base_labels=-1, lbl_col='anno_lbl', 
                         context=0, df=None, context_alignment=None, 
-                        min_size=None, anno_dtype=['polygon'], inplace=False):
+                        min_size=None, anno_dtype=['polygon'], 
+                        center_lbl_key='center_lbl', inplace=False):
         """Crop the entire dataset with fixed crop-shape
 
         Args:
@@ -721,6 +722,7 @@ class LOSTDataset(object):
             min_size (int, tuple of int): minimum size of produced crops in both
                 dimensions if int or for (H, W) if tuple of int
             anno_dtype (list of str): dtype to apply on
+            center_lbl_key (str): column containing the label the crop was aligned to
                 
         Returns:
             pd.DataFrame
@@ -728,7 +730,7 @@ class LOSTDataset(object):
         df = self._get_df(df)
         df = crop_components(df, dst_dir, base_labels, lbl_col, context, 
                              context_alignment, min_size, anno_dtype, 
-                             self.fileman)
+                             center_lbl_key=center_lbl_key, self.fileman)
         return self._update_inplace(df, inplace)
         
     #
