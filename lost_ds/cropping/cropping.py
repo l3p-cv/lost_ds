@@ -183,6 +183,7 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
             crop_path = os.path.join(dst_dir, crop_name)
             fs.write_img(crop, crop_path)
             crop_anno['img_path'] = crop_path
+            crop_anno['center_lbl'] = row[lbl_col]
             ret_df.append(crop_anno)
         if len(ret_df):
             return pd.concat(ret_df)
