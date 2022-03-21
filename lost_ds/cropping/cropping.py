@@ -91,7 +91,8 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
 
 def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0, 
                     context_alignment=None, min_size=None, 
-                    anno_dtype=['polygon'], filesystem:FileMan=None):
+                    anno_dtype=['polygon'], center_lbl_key='center_lbl', 
+                    filesystem:FileMan=None):
     """Crop the entire dataset with fixed crop-shape
 
     Args:
@@ -113,6 +114,7 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
         min_size (int, tuple of int): minimum size of produced crops in both
             dimensions if int or for (H, W) if tuple of int
         anno_dtype (list of str): dtype to apply on
+        center_lbl_key (str): column containing the label the crop was aligned to
         filesystem (fsspec.filesystem, FileMan): filesystem to use. Use local
             if not initialized
             
@@ -137,7 +139,9 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
     min_size_y = min_size_x = 0
     if not isinstance(min_size, int) and min_size is not None:
         min_size_y, min_size_x = min_size
-            
+    if isinstance(min_size, int):
+        min_size_x = min_size_y = min_size
+    
     def crop_and_recalculate(img_path, img_df):
         if base_labels == -1:
             base_df = img_df
@@ -183,18 +187,19 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
             crop_path = os.path.join(dst_dir, crop_name)
             fs.write_img(crop, crop_path)
             crop_anno['img_path'] = crop_path
+            crop_anno[center_lbl_key] = row[lbl_col]
             ret_df.append(crop_anno)
         if len(ret_df):
             return pd.concat(ret_df)
         else: 
             return None
     
-    # crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, df) 
-    #                                 for path, df in tqdm(df.groupby('img_path'), 
-    #                                                  desc='crop dataset'))
+    crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, df) 
+                                    for path, df in tqdm(df.groupby('img_path'), 
+                                                     desc='crop dataset'))
     
-    crop_dfs = []
-    for path, df in tqdm(df.groupby('img_path'), desc='crop dataset'):
-        crop_dfs.append(crop_and_recalculate(path, df))
+    # crop_dfs = []
+    # for path, df in tqdm(df.groupby('img_path'), desc='crop dataset'):
+    #     crop_dfs.append(crop_and_recalculate(path, df))
                                     
     return pd.concat(crop_dfs)

@@ -1,1 +1,1 @@
-from lost_ds.detection.detection import detection_dataset
+from lost_ds.detection.detection import detection_dataset, bbox_nms

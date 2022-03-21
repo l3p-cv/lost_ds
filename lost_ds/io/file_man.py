@@ -131,6 +131,8 @@ class FileMan(object):
         
         if isinstance(ds, str):
             return self._load_dataset(ds)
+        elif isinstance(ds, dict):
+            return pd.DataFrame(ds)
         elif isinstance(ds, pd.DataFrame):
             return ds
         elif 'LOSTDataset' in str(type(ds)):

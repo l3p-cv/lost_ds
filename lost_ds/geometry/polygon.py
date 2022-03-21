@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 from shapely.geometry import mapping, MultiPolygon, Polygon as Poly, GeometryCollection
 import numpy as np
 import cv2
@@ -17,7 +18,10 @@ class Polygon(Geometry):
     
     def crop(self, crop_pos, data, **kwargs):
         xmin, ymin, xmax, ymax = crop_pos.bounds
-        poly = self.to_shapely(data).buffer(0)
+        try:
+            poly = self.to_shapely(data).buffer(0)
+        except ValueError:
+            return [np.nan]
         intersection = poly.intersection(crop_pos)
         if intersection.is_empty:
             return [np.nan]
@@ -25,8 +29,11 @@ class Polygon(Geometry):
         new_polys = []
         if isinstance(intersection, MultiPolygon):
             new_polys = list(intersection)
+            # new_polys = intersection.geoms
         elif isinstance(intersection, GeometryCollection):
             new_polys = [i for i in intersection if 'polygon' in str(type(i))]
+            # new_polys = intersection.geoms
+            # new_polys = [p for p in new_polys if 'polygon' in str(type(p))]
         else:
             new_polys = [intersection]
         

@@ -127,7 +127,7 @@ def draw_points(img, data, text, color=(0, 0, 255), radius=2,
         
     for point, txt, c in zip(data, text, color):
         cv2.circle(img, tuple(point), radius, c, line_thickness)
-        img = draw_text(img, txt, *point-[0, radius], c, line_thickness)
+        img = draw_text(img, txt, *point-[0, radius], c, max(line_thickness, 1))
     return img
 
 
