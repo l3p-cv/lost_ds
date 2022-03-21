@@ -1,13 +1,70 @@
 
+from joblib import Parallel, cpu_count, delayed 
 import pandas as pd 
+import numpy as np 
 
 from lost_ds.functional.split import split_by_empty
 from lost_ds.functional.validation import (validate_empty_images, 
                                            validate_img_paths,
                                            validate_single_labels)
-from lost_ds.functional.transform import (to_abs,
+from lost_ds.functional.transform import (to_abs, to_rel,
                                           transform_bbox_style)
 from lost_ds.util import get_fs
+
+
+def bbox_nms(df: pd.DataFrame, lbl_col='anno_lbl', method='nms', iou_thr=0.5, 
+             filesystem=None, **kwargs):
+    
+    # refer to: https://github.com/ZFTurbo/Weighted-Boxes-Fusion
+    from ensemble_boxes import (nms, non_maximum_weighted, soft_nms, 
+                                weighted_boxes_fusion)
+    
+    bbox_df = df[df['anno_dtype']=='bbox']
+    bbox_df = validate_single_labels(bbox_df, lbl_col, 'nms_lbl')
+    got_scores = False
+    if 'anno_confidence' in bbox_df.keys():
+        if len(bbox_df['anno_confidence'].notnull()):
+            print('Warning! Got data with missing anno_confidence. Will remove it')
+        bbox_df = bbox_df[bbox_df['anno_confidence'].notnull()]
+        got_scores = True
+    else: 
+        bbox_df['anno_confidence'] = 1.0
+    
+    # make same format
+    bbox_df = to_rel(bbox_df, filesystem, False)
+    bbox_df = transform_bbox_style('x1y1x2y2', bbox_df)
+    
+    fn_dict = {'nms': nms, 'nmw': non_maximum_weighted, 'soft_nms': soft_nms, 
+               'wbf': weighted_boxes_fusion}
+    
+    # run nms imagewise
+    assert method in fn_dict.keys(), f'invalid nms method: {method} - ' \
+        f'choose one of {list(fn_dict.keys())}'
+    nms_fn = fn_dict[method]
+    
+    def apply_nms(img_path, img_df):
+        boxes_list = np.vstack(img_df['anno_data']).tolist()
+        scores_list = list(img_df['anno_confidence'])
+        labels_list = list(img_df['nms_lbl'])
+        boxes, scores, labels = nms_fn([boxes_list], [scores_list], 
+                                       [labels_list], iou_thr=iou_thr, **kwargs)
+        n_boxes = len(boxes)
+        result = {'anno_data': list(boxes), 'anno_lbl':list(labels), 
+                  'anno_style': ['x1y1x2y2']*n_boxes, 
+                  'anno_dtype': ['bbox']*n_boxes, 'anno_format': ['rel']*n_boxes, 
+                  'img_path': [img_path]*n_boxes}
+        if got_scores:
+            result['anno_confidence'] = list(scores)
+        return pd.DataFrame(result)
+
+    # results = list()
+    # for img_path, img_df in bbox_df.groupby('img_path'):
+    #     results.append(apply_nms(img_path, img_df))
+
+    results = Parallel(cpu_count())(delayed(apply_nms)(img_path, img_df) 
+                          for img_path, img_df in bbox_df.groupby('img_path'))
+ 
+    return pd.concat(results)
 
 
 def detection_dataset(df, lbl_col='anno_lbl', det_col='det_lbl', 
