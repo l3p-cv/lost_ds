@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased] 
 ### Added 
 - `bbox_nms` method to directly apply non-max-suppresseion for bboxes
-- Argument `path_col` in methods `to_abs` and `to_rel` to enable explicit column specification to look for image paths
-- Argument `mode` for method `remap_img_path` to enable not only replacement but also prepending of root paths
-- Set argument default of `inplace` of method `pack_ds` to False
-- Enable visualization of annos without `anno_lbl` specified
 
 ## [0.1.0] - 2022-02-09
 ### Changes

@@ -18,8 +18,7 @@ from lost_ds.io.file_man import FileMan
 from lost_ds.functional.filter import unique_labels
 
         
-def to_abs(df, path_col='img_path', 
-           filesystem:Union[FileMan,fsspec.AbstractFileSystem]=None, 
+def to_abs(df, filesystem:Union[FileMan,fsspec.AbstractFileSystem]=None, 
            verbose=True):
     ''' Transform all annos to absolute annos
     
@@ -34,13 +33,13 @@ def to_abs(df, path_col='img_path',
     '''
     df = df.copy()
     df_rel = df[df['anno_format'] != 'abs']
-    cols = [path_col, 'anno_data', 'anno_dtype', 'anno_format']
+    cols = ['img_path', 'anno_data', 'anno_dtype', 'anno_format']
     def make_abs(row):
         geom = LOSTGeometries()
         anno_data = row.anno_data
         anno_format = row.anno_format
         if isinstance(anno_data, np.ndarray) and anno_format=='rel':
-            img_path = row[path_col]
+            img_path = row.img_path
             anno_dtype = row.anno_dtype
             img_shape = get_imagesize(img_path, filesystem)
             anno_data = geom.to_abs(
@@ -59,8 +58,7 @@ def to_abs(df, path_col='img_path',
     return df
 
 
-def to_rel(df, path_col='img_path', 
-           filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None,
+def to_rel(df, filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None,
            verbose=True):
     ''' Transform all annos to absolute annos
     
@@ -75,13 +73,13 @@ def to_rel(df, path_col='img_path',
     '''
     df = df.copy()
     df_abs = df[df['anno_format'] != 'rel']
-    cols = [path_col, 'anno_data', 'anno_dtype', 'anno_format']
+    cols = ['img_path', 'anno_data', 'anno_dtype', 'anno_format']
     def make_rel(row):
         geom = LOSTGeometries()
         anno_data = row.anno_data
         anno_format = row.anno_format
         if isinstance(anno_data, np.ndarray) and anno_format == 'abs':
-            img_path = row[path_col]
+            img_path = row.img_path
             anno_dtype = row.anno_dtype
             img_shape = get_imagesize(img_path, filesystem)
             anno_data = geom.to_rel(
