@@ -80,7 +80,7 @@ def vis_and_store(df, out_dir, lbl_col='anno_lbl', color=(0, 0, 255),
     def vis_img(img_path, df_vis):
         geom = LOSTGeometries()
         out_path = os.path.join(out_dir, os.path.basename(img_path))
-        if df_vis[lbl_col].notnull().sum() > 0:
+        if df_vis['anno_data'].notnull().any():
             img = fs.read_img(img_path)
             img = vis_sample(img=img, df=df_vis, line_thickness=line_thickness, 
                              color=color, lbl_col=lbl_col, lost_geometries=geom,
@@ -88,8 +88,7 @@ def vis_and_store(df, out_dir, lbl_col='anno_lbl', color=(0, 0, 255),
             fs.write_img(img, out_path)
         else:
             fs.copy(img_path, out_path)
-        return None
-    
+            
     Parallel(n_jobs=-1)(delayed(vis_img)(path, df_vis) 
                         for path, df_vis in tqdm(df.groupby('img_path'), 
                                                  desc='visualize'))

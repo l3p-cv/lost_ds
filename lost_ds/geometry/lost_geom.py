@@ -199,10 +199,16 @@ class LOSTGeometries:
             label (string, list of string): single label or multi label
             confidence (float or list of float):
         '''
+        if label is None:
+            return label
         conf = text = None
         lbl = label
         if isinstance(label, str):
+            if len(label) == 0:
+                return None
             lbl = [label]
+        if len(lbl) == 0:
+            return None
         if isinstance(confidence, float):
             conf = [confidence]
         if conf is not None:
