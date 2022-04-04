@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased] 
 ### Added 
-- New stuff here
+- `bbox_nms` method to directly apply non-max-suppresseion for bboxes
 
 ## [0.1.0] - 2022-02-09
 ### Changes
