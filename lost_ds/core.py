@@ -210,7 +210,7 @@ class LOSTDataset(object):
             
     
     def pack_ds(self, out_dir, df=None, cols=['img_path', 'mask_path'], 
-                dirs = ['imgs', 'masks', 'crops'], inplace=True):
+                dirs = ['imgs', 'masks', 'crops'], inplace=False):
         '''Copy all images from dataset to a new place and update the dataframe 
         
         Args:
@@ -381,7 +381,7 @@ class LOSTDataset(object):
     #   Transformation
     #
     
-    def to_abs(self, df=None, verbose=True, inplace=False):
+    def to_abs(self, df=None, path_col='img_path', verbose=True, inplace=False):
         ''' Transform dataframe to absolute data
         
         Args:
@@ -390,11 +390,11 @@ class LOSTDataset(object):
             inplace (bool): overwrite self.df
         '''
         df = self._get_df(df)
-        df = to_abs(df, self.fileman, verbose)
+        df = to_abs(df, path_col, self.fileman, verbose)
         return self._update_inplace(df, inplace)
     
     
-    def to_rel(self, df=None, verbose=True, inplace=False):
+    def to_rel(self, df=None, path_col='img_path', verbose=True, inplace=False):
         ''' Transform dataframe to relative data
         
         Args:
@@ -403,7 +403,7 @@ class LOSTDataset(object):
             inplace (bool): overwrite self.df
         '''
         df = self._get_df(df)
-        df = to_rel(df, self.fileman, verbose)
+        df = to_rel(df, path_col, self.fileman, verbose)
         self._update_inplace(df, inplace)
     
     
