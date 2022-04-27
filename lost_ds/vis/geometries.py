@@ -7,24 +7,13 @@ import cv2
 #   draw text
 #
 
-H_MAX_FRAC = 0.04
 
-def get_fontscale(fontscale, text_h, thickness):
-    if isinstance(fontscale, (int, float)):
-        return fontscale
-    elif fontscale=='auto':
-        fontscale = cv2.getFontScaleFromHeight(cv2.FONT_HERSHEY_SIMPLEX, 
-                                           max(text_h, 10), thickness)
-    return fontscale
-
-def get_textsize(text, thickness, fontscale, img_h):
-    text_max_h = int(H_MAX_FRAC * img_h)
-    fontscale = get_fontscale(fontscale, text_max_h, thickness)
+def get_textsize(text, thickness, fontscale):
     (text_w, text_h), baseline = cv2.getTextSize(text,
                                                 cv2.FONT_HERSHEY_SIMPLEX,
                                                 fontscale, 
                                                 thickness)
-    return text_w, text_h, baseline, fontscale
+    return text_w, text_h, baseline
 
 
 def draw_text(img, text, x, y, color, thickness=2, fontscale=2):
@@ -45,8 +34,7 @@ def draw_text(img, text, x, y, color, thickness=2, fontscale=2):
     if text is None:
         return img
     
-    text_w, text_h, baseline, fontscale = get_textsize(text, thickness, 
-                                                       fontscale, img.shape[0])
+    text_w, text_h, baseline = get_textsize(text, thickness, fontscale)
     
     # avoid text being out of image
     ymin = y - text_h - baseline - thickness
