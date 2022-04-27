@@ -131,7 +131,7 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
         raise NotImplementedError('Component cropping supports polygons only')
     
     df = to_abs(df, verbose=False)
-    
+    df[center_lbl_key] = False
     context_y = context_x = context
     if not isinstance(context, (float, int)):
         context_y, context_x = context
@@ -187,19 +187,21 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
             crop_path = os.path.join(dst_dir, crop_name)
             fs.write_img(crop, crop_path)
             crop_anno['img_path'] = crop_path
-            crop_anno[center_lbl_key] = row[lbl_col]
+            crop_anno.loc[idx, center_lbl_key] = True
+            # crop_anno[center_lbl_key] = row[lbl_col]
+            # crop_anno[center_lbl_key] = crop_anno[center_lbl_key].apply(lambda x: row[lbl_col])
             ret_df.append(crop_anno)
         if len(ret_df):
             return pd.concat(ret_df)
         else: 
             return None
     
-    crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, df) 
-                                    for path, df in tqdm(df.groupby('img_path'), 
-                                                     desc='crop dataset'))
+    # crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, df) 
+    #                                 for path, df in tqdm(df.groupby('img_path'), 
+    #                                                  desc='crop dataset'))
     
-    # crop_dfs = []
-    # for path, df in tqdm(df.groupby('img_path'), desc='crop dataset'):
-    #     crop_dfs.append(crop_and_recalculate(path, df))
+    crop_dfs = []
+    for path, df in tqdm(df.groupby('img_path'), desc='crop dataset'):
+        crop_dfs.append(crop_and_recalculate(path, df))
                                     
     return pd.concat(crop_dfs)
