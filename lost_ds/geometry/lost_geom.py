@@ -157,7 +157,7 @@ class LOSTGeometries:
     
     
     def draw(self, img, anno_data, anno_conf, anno_label, anno_dtype, 
-             anno_style, anno_format, line_thickness, color, radius):
+             anno_style, anno_format, line_thickness, fontscale, color, radius):
         '''draw annotation onto an image
         Args:
             img (np.ndarray): image to draw on
@@ -189,7 +189,7 @@ class LOSTGeometries:
             thickness = self.get_line_thickness(dtype, line_thickness)    
             geom = self._get_geometry(dtype)
             img = geom.draw(img, data, format_, style, text, c, thickness, 
-                            radius=radius)
+                            fontscale, radius=radius)
         return img
         
         
