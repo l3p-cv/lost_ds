@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Argument `mode` for method `remap_img_path` to enable not only replacement but also prepending of root paths
 - Set argument default of `inplace` of method `pack_ds` to False
 - Enable visualization of annos without `anno_lbl` specified
+- Argument `fontscale` at `vis_and_store` to enable manually control for textsize
 
 ## [0.1.0] - 2022-02-09
 ### Changes
