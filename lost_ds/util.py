@@ -14,15 +14,19 @@ def get_fs(filesystem, backend='pandas'):
         return FileMan(filesystem, backend)
 
 
-def to_parquet(path, df, filesystem=None):
-    # TODO: parse data generic, not only anno_data - make all collumns of type 
-    #       object having same dimensions to make it serializable
-    fs = get_fs(filesystem)
+def prep_parquet(df):
     geom = LOSTGeometries()
     store_df = df.copy()
     if 'anno_data' in df.keys():
         store_df.anno_data = store_df.anno_data.apply(lambda x: 
             geom.serializable(x))
+        return store_df
+    else:
+        return df
+
+def to_parquet(path, df, filesystem=None):
+    fs = get_fs(filesystem)
+    store_df = prep_parquet(df)
     fs.write_dataset(store_df, path)
     
     
