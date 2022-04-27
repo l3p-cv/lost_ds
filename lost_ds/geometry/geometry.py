@@ -80,9 +80,10 @@ class Geometry(object):
     
     
     def draw(self, img, data, data_format, style, text, color, line_thickness, 
-             **kwargs):
+             fontscale, **kwargs):
         data = self.to_abs(data, data_format, img.shape).astype(np.int32)
-        img = self._draw(img, data, style, text, color, line_thickness,**kwargs)
+        img = self._draw(img, data, style, text, color, line_thickness, 
+                         fontscale, **kwargs)
         assert img is not None
         return img
     

@@ -15,6 +15,8 @@ def get_fs(filesystem, backend='pandas'):
 
 
 def to_parquet(path, df, filesystem=None):
+    # TODO: parse data generic, not only anno_data - make all collumns of type 
+    #       object having same dimensions to make it serializable
     fs = get_fs(filesystem)
     geom = LOSTGeometries()
     store_df = df.copy()

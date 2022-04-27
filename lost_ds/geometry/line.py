@@ -49,9 +49,10 @@ class Line(Geometry):
         return len(data.shape)==2 and len(data)>1
     
     
-    def _draw(self, img, data, style, text, color, line_thickness, **kwargs):
+    def _draw(self, img, data, style, text, color, line_thickness, fontscale, 
+              **kwargs):
         if line_thickness is None:
             line_thickness = 2
-        return draw_lines(img, data, text, color, line_thickness)
+        return draw_lines(img, data, text, color, line_thickness, fontscale)
     
     

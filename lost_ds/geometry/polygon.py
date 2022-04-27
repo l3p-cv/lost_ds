@@ -57,7 +57,9 @@ class Polygon(Geometry):
         return segmentation
 
 
-    def _draw(self, img, data, style, text, color, line_thickness, **kwargs):
+    def _draw(self, img, data, style, text, color, line_thickness, fontscale, 
+              **kwargs):
         if line_thickness is None:
             line_thickness = 2
-        return draw_polygons(img, data, text, color, line_thickness)
+        return draw_polygons(img, data, text, color, line_thickness, 
+                             fontscale=fontscale)

@@ -7,15 +7,19 @@ import cv2
 #   draw text
 #
 
-H_MAX_FRAC = 0.05
-W_MAX_FRAC = 0.3
+H_MAX_FRAC = 0.04
 
-def calculate_text(text, thickness, img_h):
-    # calculate fontscale when text is 5% of img-height
-    fontscale = cv2.getFontScaleFromHeight(cv2.FONT_HERSHEY_SIMPLEX, 
-                                           max(int(H_MAX_FRAC * img_h), 10), 
-                                           thickness)
-    
+def get_fontscale(fontscale, text_h, thickness):
+    if isinstance(fontscale, (int, float)):
+        return fontscale
+    elif fontscale=='auto':
+        fontscale = cv2.getFontScaleFromHeight(cv2.FONT_HERSHEY_SIMPLEX, 
+                                           max(text_h, 10), thickness)
+    return fontscale
+
+def get_textsize(text, thickness, fontscale, img_h):
+    text_max_h = int(H_MAX_FRAC * img_h)
+    fontscale = get_fontscale(fontscale, text_max_h, thickness)
     (text_w, text_h), baseline = cv2.getTextSize(text,
                                                 cv2.FONT_HERSHEY_SIMPLEX,
                                                 fontscale, 
@@ -23,21 +27,7 @@ def calculate_text(text, thickness, img_h):
     return text_w, text_h, baseline, fontscale
 
 
-
-def get_text_size(text, max_width, max_height, thickness):
-    text_w, text_h, baseline, fontscale = calculate_text(text, thickness, 
-                                                         max_height/H_MAX_FRAC)
-    if text_w > max_width:
-       dst_w_frac = max_width / text_w
-       dst_h = text_h * dst_w_frac
-       text_w, text_h, baseline, fontscale = calculate_text(text, thickness, 
-                                                            dst_h/H_MAX_FRAC)
-    
-    return text_w, text_h, baseline, fontscale
-
-
-
-def draw_text(img, text, x, y, color, thickness=2):
+def draw_text(img, text, x, y, color, thickness=2, fontscale=2):
     '''Draw text onto an image
     Args:
         img (numpy.ndarray): Image to draw on
@@ -55,11 +45,10 @@ def draw_text(img, text, x, y, color, thickness=2):
     if text is None:
         return img
     
-    text_w, text_h, baseline, fontscale = get_text_size(text,
-                                                        img.shape[1]*W_MAX_FRAC, 
-                                                        img.shape[0]*H_MAX_FRAC, 
-                                                        thickness)
+    text_w, text_h, baseline, fontscale = get_textsize(text, thickness, 
+                                                       fontscale, img.shape[0])
     
+    # avoid text being out of image
     ymin = y - text_h - baseline - thickness
     if ymin < 0:
         y += abs(ymin)
@@ -106,7 +95,7 @@ def get_data(data, text, color):
 
 
 def draw_points(img, data, text, color=(0, 0, 255), radius=2, 
-                line_thickness=-1):
+                line_thickness=-1, fontscale=2):
     '''Draw points onto the given image
 
     Args:
@@ -127,11 +116,13 @@ def draw_points(img, data, text, color=(0, 0, 255), radius=2,
         
     for point, txt, c in zip(data, text, color):
         cv2.circle(img, tuple(point), radius, c, line_thickness)
-        img = draw_text(img, txt, *point-[0, radius], c, max(line_thickness, 1))
+        img = draw_text(img, txt, *point-[0, radius], c, max(line_thickness, 1), 
+                        fontscale)
     return img
 
 
-def draw_polygons(img, data, text, color=(0, 0, 255), line_thickness=2, offset=None):
+def draw_polygons(img, data, text, color=(0, 0, 255), line_thickness=2, 
+                  fontscale=2, offset=None):
     '''Draw polygons onto the given image
 
     Args:
@@ -159,11 +150,12 @@ def draw_polygons(img, data, text, color=(0, 0, 255), line_thickness=2, offset=N
         txt_x = poly[txt_y_i][0]
         txt_y = y_values.min()
         cv2.polylines(img, [poly], True, c, thickness=line_thickness)
-        img = draw_text(img, txt, txt_x, txt_y, c, line_thickness)
+        img = draw_text(img, txt, txt_x, txt_y, c, line_thickness, fontscale)
     return img
 
 
-def draw_boxes(img, data, text, color=(0, 0, 255), line_thickness=1):
+def draw_boxes(img, data, text, color=(0, 0, 255), line_thickness=1,
+               fontscale=2):
     '''Draw bboxes onto the given image
 
     Args:
@@ -186,11 +178,12 @@ def draw_boxes(img, data, text, color=(0, 0, 255), line_thickness=1):
     
     for bb, txt, c in zip(data, text, color):
         cv2.rectangle(img, (bb[0],bb[1]), (bb[2],bb[3]), c, line_thickness)
-        img = draw_text(img, txt, bb[0], bb[1], c, line_thickness)
+        img = draw_text(img, txt, bb[0], bb[1], c, line_thickness, fontscale)
     return img
 
 
-def draw_lines(img, data, text, color=(0, 0, 255), line_thickness=2):
+def draw_lines(img, data, text, color=(0, 0, 255), line_thickness=2,
+               fontscale=2):
     '''Draw poly lines onto the given image
 
     Args:
@@ -216,6 +209,6 @@ def draw_lines(img, data, text, color=(0, 0, 255), line_thickness=2):
         txt_x = poly[txt_y_i][0]
         txt_y = y_values.min()
         cv2.polylines(img, [poly], False, c, line_thickness)
-        img = draw_text(img, txt, txt_x, txt_y, c, line_thickness)
+        img = draw_text(img, txt, txt_x, txt_y, c, line_thickness, fontscale)
     return img
     

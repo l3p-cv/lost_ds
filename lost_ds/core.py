@@ -86,11 +86,11 @@ class LOSTDataset(object):
     #
     
     def _parse_data(self):
-        # parse anno_data to numpy array
+        # parse anno_data (lists) to numpy array
         if 'anno_data' in self.df:
             self.df.anno_data = self.df.anno_data.apply(
                 lambda x: np.vstack(x).squeeze())
-            
+                    
             
     def to_parquet(self, path, df=None):
         ''' Store dataset as .parquet file
@@ -616,7 +616,8 @@ class LOSTDataset(object):
     #
     
     def vis_and_store(self, out_dir, df=None, lbl_col='anno_lbl', 
-                      color=(0, 0, 255), line_thickness='auto', radius=2):
+                      color=(0, 0, 255), line_thickness=2, fontscale=2, 
+                      radius=2):
         '''Visualize annotations and store them to a folder
 
         Args:
@@ -630,8 +631,8 @@ class LOSTDataset(object):
             radius (int): radius to draw for points/circles
         '''
         df = self._get_df(df)
-        vis_and_store(df, out_dir, lbl_col, color, line_thickness, self.fileman,
-                      radius)
+        vis_and_store(df, out_dir, lbl_col, color, line_thickness, fontscale, 
+                      self.fileman, radius)
     
     
     def vis_semantic_segmentation(self, out_dir, n_classes, palette='dark', 
