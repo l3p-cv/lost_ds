@@ -32,7 +32,7 @@ def copy_imgs(df, out_dir, col='img_path', force_overwrite=False,
                           for path in tqdm(img_paths, desc='copy imgs'))
 
 def copy_to_zip(zip_file, df, out_dir, zip_dir, col='img_path', 
-              filesystem=None):
+              filesystem=None, progress_callback=None):
     '''Copy all images of dataset into zip archive
 
     Args:
@@ -47,15 +47,28 @@ def copy_to_zip(zip_file, df, out_dir, zip_dir, col='img_path',
     fs = get_fs(filesystem).fs
     def copy_file_to_zip(src_path, zip_file):
         dst_path = os.path.join(zip_dir, os.path.basename(src_path))
+        try:
+            fs.ls('')
+        except:
+            pass
         with fs.open(src_path, 'rb') as f:
             zip_file.writestr(dst_path, f.read())
         
     img_paths = list(df[col].unique())
-    for path in img_paths:
+    total = len(img_paths)
+    next_pg = 0
+    for idx, path in enumerate(img_paths):
         copy_file_to_zip(path, zip_file)
+        if progress_callback is not None:
+            pg = (idx+1) *100 / total
+            if pg == 100:
+                progress_callback(pg)
+            elif pg >= next_pg:
+                progress_callback(pg)
+                next_pg += 5
     
 def pack_ds(df, out_dir, cols=['img_path', 'mask_path', 'crop_path'],
-            dirs = ['imgs', 'masks', 'crops'], filesystem=None, zip_file=None):
+            dirs = ['imgs', 'masks', 'crops'], filesystem=None, zip_file=None, progress_callback=None):
     '''Copy all images from dataset to a new place and update the dataframe 
     
     Args:
@@ -85,6 +98,7 @@ def pack_ds(df, out_dir, cols=['img_path', 'mask_path', 'crop_path'],
                 out_base = os.path.basename(out_dir)
                 out_base = os.path.splitext(out_base)[0]
                 zip_dir = os.path.join(out_base, _dir)
-                copy_to_zip(zip_file, df, out_dir=out_dir, zip_dir=zip_dir, col=col, filesystem=fs)
+                copy_to_zip(zip_file, df, out_dir=out_dir, zip_dir=zip_dir, col=col, filesystem=fs, 
+                            progress_callback=progress_callback)
             df = remap_img_path(df, dout, col)
     return df
