@@ -7,14 +7,34 @@ try:
 except:
     pass
 import numpy as np 
+import cv2 
 
 from lost_ds.util import get_fs
 from lost_ds.geometry.lost_geom import LOSTGeometries
 from lost_ds.functional.api import remove_empty
 
 
-def vis_sample(img, df, line_thickness=3, color=(0, 0, 255), lbl_col='anno_lbl',
-              lost_geometries:LOSTGeometries=None, blow_up=None, radius=2):
+def get_fontscale(fontscale, thickness, img_h, text_max_h_frac=0.04):
+    if isinstance(fontscale, (int, float)):
+        return fontscale
+    elif fontscale=='auto':
+        text_h = int(text_max_h_frac * img_h)
+        fontscale = cv2.getFontScaleFromHeight(cv2.FONT_HERSHEY_SIMPLEX, 
+                                           max(text_h, 10), 
+                                           thickness)
+    return fontscale
+
+
+def get_thickness(line_thickness, img_h, thickness_max_h_frac=0.002):
+    if line_thickness == 'auto':
+        return int(thickness_max_h_frac * img_h)
+    else: 
+        return line_thickness
+
+
+def vis_sample(img, df, line_thickness=3, color=(0, 0, 255), 
+               lbl_col='anno_lbl', lost_geometries:LOSTGeometries=None, 
+               blow_up=None, radius=2, fontscale=2):
     '''Visualize annos of an image
 
     Args:
@@ -46,20 +66,19 @@ def vis_sample(img, df, line_thickness=3, color=(0, 0, 255), lbl_col='anno_lbl',
         anno_dtype = list(df['anno_dtype'])
         anno_style = list(df['anno_style'])
         anno_format = list(df['anno_format'])
-        
-        if line_thickness == 'auto':
-            thickness = 0.002*img.shape[0]
-        else: 
-            thickness = line_thickness
+        thickness = get_thickness(line_thickness, img.shape[0])
+        fontscale = get_fontscale(fontscale, thickness, img.shape[0])            
         thickness = max(1, thickness)
         img = geom.draw(img, anno_data, anno_conf, anno_lbl, anno_dtype, 
-                        anno_style, anno_format, thickness, color, radius)
+                        anno_style, anno_format, thickness, fontscale, color, 
+                        radius)
             
     return img
 
 
 def vis_and_store(df, out_dir, lbl_col='anno_lbl', color=(0, 0, 255), 
-                  line_thickness='auto', filesystem=None, radius=2):
+                  line_thickness=2, fontscale=2, filesystem=None, 
+                  radius=2):
     '''Visualize annotations and store them to a folder
 
     Args:
@@ -83,8 +102,8 @@ def vis_and_store(df, out_dir, lbl_col='anno_lbl', color=(0, 0, 255),
         if df_vis['anno_data'].notnull().any():
             img = fs.read_img(img_path)
             img = vis_sample(img=img, df=df_vis, line_thickness=line_thickness, 
-                             color=color, lbl_col=lbl_col, lost_geometries=geom,
-                             radius=radius)
+                             color=color, lbl_col=lbl_col, lost_geometries=geom, 
+                             radius=radius, fontscale=fontscale)
             fs.write_img(img, out_path)
         else:
             fs.copy(img_path, out_path)

@@ -86,11 +86,11 @@ class LOSTDataset(object):
     #
     
     def _parse_data(self):
-        # parse anno_data to numpy array
+        # parse anno_data (lists) to numpy array
         if 'anno_data' in self.df:
             self.df.anno_data = self.df.anno_data.apply(
                 lambda x: np.vstack(x).squeeze())
-            
+                    
             
     def to_parquet(self, path, df=None):
         ''' Store dataset as .parquet file
@@ -616,7 +616,8 @@ class LOSTDataset(object):
     #
     
     def vis_and_store(self, out_dir, df=None, lbl_col='anno_lbl', 
-                      color=(0, 0, 255), line_thickness='auto', radius=2):
+                      color=(0, 0, 255), line_thickness=2, fontscale=2, 
+                      radius=2):
         '''Visualize annotations and store them to a folder
 
         Args:
@@ -630,8 +631,8 @@ class LOSTDataset(object):
             radius (int): radius to draw for points/circles
         '''
         df = self._get_df(df)
-        vis_and_store(df, out_dir, lbl_col, color, line_thickness, self.fileman,
-                      radius)
+        vis_and_store(df, out_dir, lbl_col, color, line_thickness, fontscale, 
+                      self.fileman, radius)
     
     
     def vis_semantic_segmentation(self, out_dir, n_classes, palette='dark', 
@@ -780,15 +781,21 @@ class LOSTDataset(object):
     
     
     def segmentation_to_lost(self, pixel_mapping, background=0, 
-                             seg_key='seg_path', df=None, inplace=False):
+                             seg_key='seg_path', df=None, cast_others=False, 
+                             inplace=False):
         '''Create LOST-Annotations from semantic segmentations / pixelmaps 
         
         Args:
             pixel_mapping (dict): mapping of pixel-value to anno_lbl, e.g. 
-                {0:'background', 1:'thing'}
+                {0:'background', 1:'thing', 255:'another_thing'}. 
+                If no annotations for background are desired it can be ommited 
+                from the dictionary
             background (int): pixel-value for background.
             seg_key (str): dataframe key containing the paths to the stored 
                 pixelmaps
+            cast_others (bool): Flag if pixel values not occuring in 
+                `pixel_mapping` should be handeled as background. Raises 
+                ValueError if False and an unknown pixel occurs
             df (pd.DataFrame): dataframe to apply on
             
         Returns:
@@ -797,6 +804,7 @@ class LOSTDataset(object):
         df = self._get_df(df)
         df = segmentation_to_lost(df, pixel_mapping=pixel_mapping, 
                                       background=background, seg_key=seg_key, 
+                                      cast_others=cast_others,
                                       filesystem=self.fileman)
         return self._update_inplace(df, inplace)
     

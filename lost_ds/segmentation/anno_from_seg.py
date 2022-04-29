@@ -8,14 +8,23 @@ import pandas as pd
 from lost_ds.im_util import get_fs
 
 
-def _segmentation_to_polygon(segmentation, pixel_mapping: dict):
-        
+def _segmentation_to_polygon(segmentation, pixel_mapping: dict, background, 
+                             cast_others):
+    
+    u_values = np.unique(segmentation)
+    expected_values = np.unique(list(pixel_mapping.keys()) + [background])
+    val_intersection = np.intersect1d(u_values, expected_values)
+    if not len(u_values) == len(expected_values) == len(val_intersection):
+        if not cast_others:
+            raise ValueError(f'Got pixel values {u_values} expected ' \
+                             f'{expected_values} from {pixel_mapping}')
+            
     if len(segmentation.shape)==3:
         segmentation = cv2.cvtColor(segmentation, cv2.COLOR_BGR2GRAY)        
     
     im_h, im_w = segmentation.shape
     
-    px_values = []
+    lbl_name = []
     lost_polygons = []
     
     contours, _ = cv2.findContours(segmentation, cv2.RETR_CCOMP, 
@@ -32,21 +41,30 @@ def _segmentation_to_polygon(segmentation, pixel_mapping: dict):
         valid_contours.append(cont)
         contour_pixels.append(idx + 1)
             
-    for px, cont in zip(contour_pixels, valid_contours):
-        org_pixels = segmentation[cont_seg==px]
-        u_px, cnts = np.unique(org_pixels, return_counts=True)
-        if not len(u_px):
+    for px_pos, cont in zip(contour_pixels, valid_contours):
+        # pick pixels
+        px_vals = segmentation[cont_seg==px_pos]
+        # find unique pixels
+        u_px_vals, cnts = np.unique(px_vals, return_counts=True)
+        if not len(u_px_vals):
             continue
-        px_org = u_px[np.argmax(cnts)]
+        # choose most occuring pixel as class
+        px = u_px_vals[np.argmax(cnts)]
+        # consider unknown pixel value as background if `cast_others`
+        if not px in expected_values and cast_others:
+            px = 0
+        # ignore background if not provided
+        if px == background and not background in list(pixel_mapping.keys()):
+            continue
         cont = np.array(cont) / np.array([im_w, im_h])
         lost_polygons.append(cont)
-        px_values.append(pixel_mapping[px_org])
+        lbl_name.append([pixel_mapping[px]])
 
-    return lost_polygons, px_values
+    return lost_polygons, lbl_name
 
 
 def segmentation_to_lost(df: pd.DataFrame, pixel_mapping, background=0, 
-                         seg_key='seg_path', filesystem=None):
+                         seg_key='seg_path', cast_others=False, filesystem=None):
     
     '''Create LOST-Annotations from semantic segmentations / pixelmaps 
     
@@ -57,6 +75,9 @@ def segmentation_to_lost(df: pd.DataFrame, pixel_mapping, background=0,
         seg_key (str): dataframe key containing the paths to the stored 
             pixelmaps
         df (pd.DataFrame): dataframe to apply on
+        cast_others (bool): Flag if pixel values not occuring in `pixel_mapping` 
+            should be handeled as background. Raises ValueError if False and 
+            an unknown pixel occurs
         filesystem (fsspec.filesystem, FileMan): filesystem to use. Use local
             if not initialized
         
@@ -69,34 +90,25 @@ def segmentation_to_lost(df: pd.DataFrame, pixel_mapping, background=0,
     pixel_mapping = pixel_mapping.copy()
     if background != 0:
         raise NotImplementedError('Background pixels have to be 0')
-        # pm0 = pixel_mapping.get(0, None)
-        # pmb = pixel_mapping[background]
-        # pixel_mapping[0] = pmb
-        # pixel_mapping[background] = pm0
     
     def seg_to_poly(seg_path, seg_df):
         img_paths = seg_df['img_path'].unique()
         assert len(img_paths) == 1
         lost_anno_data = dict()
-        segmentation = fs.read_img(seg_path, 0)
-        
-        # if background != 0:
-        #     bool_background = (segmentation==background)
-        #     bool_zero = (segmentation==0)
-        #     segmentation[bool_background] = 0
-        #     segmentation[bool_zero] = background
-            
-        lost_polys, px_values = _segmentation_to_polygon(segmentation, 
-                                                         pixel_mapping)
-        assert len(lost_polys) == len(px_values)
+        segmentation = fs.read_img(seg_path, 0)            
+        lost_polys, lbl_name = _segmentation_to_polygon(segmentation, 
+                                                        pixel_mapping, 
+                                                        background,
+                                                        cast_others)
+        assert len(lost_polys) == len(lbl_name)
         img_path = img_paths[0]
-        lost_anno_data['anno_lbl'] = px_values
+        lost_anno_data['anno_lbl'] = lbl_name
         lost_anno_data['anno_data'] = lost_polys
-        lost_anno_data['img_path'] = [img_path] * len(px_values)
-        lost_anno_data[seg_key] = [seg_path] * len(px_values)
-        lost_anno_data['anno_format'] = ['rel'] * len(px_values)
-        lost_anno_data['anno_style'] = ['xy'] * len(px_values)
-        lost_anno_data['anno_dtype'] = ['polygon'] * len(px_values)
+        lost_anno_data['img_path'] = [img_path] * len(lbl_name)
+        lost_anno_data[seg_key] = [seg_path] * len(lbl_name)
+        lost_anno_data['anno_format'] = ['rel'] * len(lbl_name)
+        lost_anno_data['anno_style'] = ['xy'] * len(lbl_name)
+        lost_anno_data['anno_dtype'] = ['polygon'] * len(lbl_name)
         return pd.DataFrame(lost_anno_data)
     
     n_segs = len(df[seg_key].unique())
@@ -110,6 +122,7 @@ def segmentation_to_lost(df: pd.DataFrame, pixel_mapping, background=0,
     #     ret.append(seg_to_poly(seg_path, seg_df))
         
     df = pd.concat(ret)
+    df.reset_index(inplace=True)
     
     return df
 

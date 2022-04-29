@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2022-04-05 
 ### Added 
 - Added zip support for pack_ds method
-
+- Argument `fontscale` at `vis_and_store` to enable manually control for textsize
+- Argument `cast_others` at `segmentation_to_lost` to allow ignoring unspecified pixel values
 ## [0.2.0] - 2022-04-04 
 ### Added 
 - `bbox_nms` method to directly apply non-max-suppresseion for bboxes

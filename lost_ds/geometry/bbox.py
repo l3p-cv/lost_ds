@@ -78,11 +78,12 @@ class Bbox(Geometry):
         return new_bboxes
     
     
-    def _draw(self, img, data, style, text, color, line_thickness, **kwargs):
+    def _draw(self, img, data, style, text, color, line_thickness, fontscale, 
+              **kwargs):
         if line_thickness is None:
             line_thickness = 2
         data = self.transform_style(data, style, 'x1y1x2y2')
-        return draw_boxes(img, data, text, color, line_thickness)
+        return draw_boxes(img, data, text, color, line_thickness, fontscale)
     
     
     def segmentation(self, segmentation, color, anno_data, anno_format, 

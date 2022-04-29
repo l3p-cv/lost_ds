@@ -50,7 +50,9 @@ class Point(Geometry):
         return len(data.shape)==1 and len(data)==2
 
     
-    def _draw(self, img, data, style, text, color, line_thickness, radius):
+    def _draw(self, img, data, style, text, color, line_thickness, fontscale, 
+              radius):
         if line_thickness is None:
             line_thickness = -1
-        return draw_points(img, data, text, color, radius, line_thickness)
+        return draw_points(img, data, text, color, radius, line_thickness, 
+                           fontscale)
