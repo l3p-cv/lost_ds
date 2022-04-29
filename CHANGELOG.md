@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2022-04-05 
 ### Added 
 - Added zip support for pack_ds method
-
+- Argument `fontscale` at `vis_and_store` to enable manually control for textsize
+- Argument `cast_others` at `segmentation_to_lost` to allow ignoring unspecified pixel values
 ## [0.2.0] - 2022-04-04 
 ### Added 
 - `bbox_nms` method to directly apply non-max-suppresseion for bboxes
@@ -15,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Argument `mode` for method `remap_img_path` to enable not only replacement but also prepending of root paths
 - Set argument default of `inplace` of method `pack_ds` to False
 - Enable visualization of annos without `anno_lbl` specified
-- Argument `fontscale` at `vis_and_store` to enable manually control for textsize
 
 ## [0.1.0] - 2022-02-09
 ### Changes

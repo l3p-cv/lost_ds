@@ -781,15 +781,21 @@ class LOSTDataset(object):
     
     
     def segmentation_to_lost(self, pixel_mapping, background=0, 
-                             seg_key='seg_path', df=None, inplace=False):
+                             seg_key='seg_path', df=None, cast_others=False, 
+                             inplace=False):
         '''Create LOST-Annotations from semantic segmentations / pixelmaps 
         
         Args:
             pixel_mapping (dict): mapping of pixel-value to anno_lbl, e.g. 
-                {0:'background', 1:'thing'}
+                {0:'background', 1:'thing', 255:'another_thing'}. 
+                If no annotations for background are desired it can be ommited 
+                from the dictionary
             background (int): pixel-value for background.
             seg_key (str): dataframe key containing the paths to the stored 
                 pixelmaps
+            cast_others (bool): Flag if pixel values not occuring in 
+                `pixel_mapping` should be handeled as background. Raises 
+                ValueError if False and an unknown pixel occurs
             df (pd.DataFrame): dataframe to apply on
             
         Returns:
@@ -798,6 +804,7 @@ class LOSTDataset(object):
         df = self._get_df(df)
         df = segmentation_to_lost(df, pixel_mapping=pixel_mapping, 
                                       background=background, seg_key=seg_key, 
+                                      cast_others=cast_others,
                                       filesystem=self.fileman)
         return self._update_inplace(df, inplace)
     
