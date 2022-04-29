@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 from shapely.geometry import Polygon, MultiPolygon
 import cv2
 from tqdm import tqdm
