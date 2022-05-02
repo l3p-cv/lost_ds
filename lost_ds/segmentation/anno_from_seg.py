@@ -122,7 +122,7 @@ def segmentation_to_lost(df: pd.DataFrame, pixel_mapping, background=0,
     #     ret.append(seg_to_poly(seg_path, seg_df))
         
     df = pd.concat(ret)
-    df.reset_index(inplace=True)
+    df.reset_index(inplace=True, drop=True)
     
     return df
 
