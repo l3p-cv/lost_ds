@@ -13,11 +13,10 @@ def _segmentation_to_polygon(segmentation, pixel_mapping: dict, background,
     
     u_values = np.unique(segmentation)
     expected_values = np.unique(list(pixel_mapping.keys()) + [background])
-    val_intersection = np.intersect1d(u_values, expected_values)
-    if not len(u_values) == len(expected_values) == len(val_intersection):
-        if not cast_others:
-            raise ValueError(f'Got pixel values {u_values} expected ' \
-                             f'{expected_values} from {pixel_mapping}')
+    setdiff = np.setdiff1d(u_values, expected_values)
+    if len(setdiff) and not cast_others:
+        raise ValueError(f'Got pixel values {u_values} expected ' \
+                            f'{expected_values} from {pixel_mapping}')
             
     if len(segmentation.shape)==3:
         segmentation = cv2.cvtColor(segmentation, cv2.COLOR_BGR2GRAY)        
