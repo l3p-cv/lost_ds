@@ -21,7 +21,7 @@ class FileMan(object):
         elif 'FileMan' in str(filesystem):
             fs = filesystem.fs
         else:
-            raise ValueError('Unsupported filesystem: {}!'.format(filesystem))
+            fs = filesystem #For other fsspec filesystems 
         return fs 
     
     def _get_backend(self, backend):
