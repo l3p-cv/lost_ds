@@ -16,7 +16,8 @@ def _segmentation_to_polygon(segmentation, pixel_mapping: dict, background,
     setdiff = np.setdiff1d(u_values, expected_values)
     if len(setdiff) and not cast_others:
         raise ValueError(f'Got pixel values {u_values} expected ' \
-                            f'{expected_values} from {pixel_mapping}')
+                         f'{expected_values} from {pixel_mapping} ' \
+                         f'(unexpected values {list(setdiff)})')
             
     if len(segmentation.shape)==3:
         segmentation = cv2.cvtColor(segmentation, cv2.COLOR_BGR2GRAY)        
