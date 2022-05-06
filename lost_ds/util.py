@@ -2,6 +2,7 @@ import pandas as pd
 from joblib import parallel_backend, Parallel, delayed, effective_n_jobs
 from sklearn.utils import gen_even_slices
 from sklearn.utils.validation import _num_samples
+from lost_ds.core import LOSTDataset
 
 from lost_ds.io.file_man import FileMan
 from lost_ds.geometry.lost_geom import LOSTGeometries
@@ -16,6 +17,8 @@ def get_fs(filesystem, backend='pandas'):
 
 def prep_parquet(df):
     geom = LOSTGeometries()
+    if isinstance(df, LOSTDataset):
+        df = df.df
     store_df = df.copy()
     if 'anno_data' in df.keys():
         store_df.anno_data = store_df.anno_data.apply(lambda x: 

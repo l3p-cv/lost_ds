@@ -126,4 +126,3 @@ def segmentation_to_lost(df: pd.DataFrame, pixel_mapping, background=0,
     
     return df
 
-

@@ -183,7 +183,7 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     """
     df = validate_img_paths(df, remove_invalid, filesystem)
     df = transform_bbox_style('xywh', df)
-    df = to_abs(df, filesystem)
+    df = to_abs(df, filesystem=filesystem)
     img_paths = df['img_path'].unique()
     
     categories = list()

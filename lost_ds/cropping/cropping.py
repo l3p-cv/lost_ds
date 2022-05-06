@@ -130,7 +130,7 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
     if not anno_dtype[0] == 'polygon': 
         raise NotImplementedError('Component cropping supports polygons only')
     
-    df = to_abs(df, verbose=False)
+    df = to_abs(df, filsystem=filesystem, verbose=False)
     df[center_lbl_key] = False
     context_y = context_x = context
     if not isinstance(context, (float, int)):
