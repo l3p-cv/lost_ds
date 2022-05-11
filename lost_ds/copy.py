@@ -97,7 +97,7 @@ def pack_ds(df, out_dir, cols=['img_path', 'mask_path', 'crop_path'],
         if col in df.keys():
             dout = os.path.join(out_dir, _dir)
             if zip_file is None:
-                if progress_callback is None:
+                if progress_callback is not None:
                     raise Exception('progress_callback is only implement for packing to zip files yet!')
                 fs.makedirs(dout, exist_ok=True)
                 copy_imgs(df=df, out_dir=dout, col=col, filesystem=fs)

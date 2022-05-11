@@ -139,7 +139,7 @@ class FileMan(object):
             return ds.df
         elif ds is None:
             return None
-        elif isinstance(ds, list):
+        elif isinstance(ds, (list, tuple)):
             return pd.concat([self.load_dataset(df) for df in ds])
         else:
             raise ValueError('Unkown input-type {}'.format(type(ds)))

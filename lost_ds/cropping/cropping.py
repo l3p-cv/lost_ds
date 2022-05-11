@@ -6,7 +6,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from lost_ds.functional.filter import label_selection, selection_mask
 import numpy as np
-from lost_ds.functional.transform import to_abs
+from lost_ds.functional.transform import to_abs, polygon_to_bbox
 
 from lost_ds.io.file_man import FileMan
 from lost_ds.functional.validation import validate_empty_images
@@ -126,11 +126,11 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
     fs = get_fs(filesystem)
     fs.makedirs(dst_dir, True)
     df = validate_empty_images(df)
-    df = df[selection_mask(anno_dtype, df, 'anno_dtype')]
-    if not anno_dtype[0] == 'polygon': 
-        raise NotImplementedError('Component cropping supports polygons only')
+    # df = df[selection_mask(anno_dtype, df, 'anno_dtype')]
+    if len(np.setdiff1d(anno_dtype, ['polygon', 'bbox'])):
+        raise NotImplementedError(f'Component cropping does not support {anno_dtype}')
     
-    df = to_abs(df, filsystem=filesystem, verbose=False)
+    df = to_abs(df, filesystem=filesystem, verbose=False)
     df[center_lbl_key] = False
     context_y = context_x = context
     if not isinstance(context, (float, int)):
@@ -147,14 +147,19 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
             base_df = img_df
         else:
             base_df = label_selection(base_labels, img_df, col=lbl_col)
+        
+        crop_df = polygon_to_bbox(base_df.copy(), 'x1y1x2y2')
+        crop_df = crop_df[selection_mask(anno_dtype, crop_df, 'anno_dtype')]
+        
         img = fs.read_img(img_path)
         im_h, im_w = img.shape[:2]
         ret_df = list()
         
-        for idx, row in base_df.iterrows():
+        for idx, row in crop_df.iterrows():
             # calculate context for crop
-            polygon = row.anno_data
-            (minx, miny), (maxx, maxy) = polygon.min(axis=0), polygon.max(axis=0)
+            # polygon = row.anno_data
+            # (minx, miny), (maxx, maxy) = polygon.min(axis=0), polygon.max(axis=0)
+            minx, miny, maxx, maxy = row.anno_data
             w, h = maxx - minx, maxy - miny
             x_marg, y_marg = context_x * w, context_y * h
             if context_alignment == 'flip':

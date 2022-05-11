@@ -54,7 +54,8 @@ def to_abs(df, path_col='img_path',
                                                  desc='to abs', 
                                                  disable=(not verbose)))
     df.loc[df.anno_format != 'abs', 'anno_data'] = pd.Series(abs_data, 
-                                                             index=df_rel.index)
+                                                             index=df_rel.index,
+                                                             dtype=object)
     df['anno_format'] = 'abs'
     return df
 
@@ -95,7 +96,8 @@ def to_rel(df, path_col='img_path',
                                                  desc='to rel',
                                                  disable=(not verbose)))
     df.loc[df.anno_format != 'rel', 'anno_data'] = pd.Series(rel_data, 
-                                                             index=df_abs.index)
+                                                             index=df_abs.index,
+                                                             dtype=object)
     df['anno_format'] = 'rel'
     return df
 

@@ -28,7 +28,7 @@ class Polygon(Geometry):
         
         new_polys = []
         if isinstance(intersection, MultiPolygon):
-            new_polys = list(intersection)
+            new_polys = list(intersection.geoms)
             # new_polys = intersection.geoms
         elif isinstance(intersection, GeometryCollection):
             new_polys = [i for i in intersection if 'polygon' in str(type(i))]

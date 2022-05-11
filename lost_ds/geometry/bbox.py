@@ -66,7 +66,7 @@ class Bbox(Geometry):
         
         new_bboxes = []
         if isinstance(intersection, MultiPolygon):
-            new_bboxes = list(intersection)
+            new_bboxes = list(intersection.geoms)
         else:
             new_bboxes = [intersection]
             

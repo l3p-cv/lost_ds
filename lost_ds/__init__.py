@@ -52,3 +52,5 @@ from lost_ds.util import (get_fs,
                           to_parquet)
 
 from lost_ds.core import LOSTDataset
+
+from lost_ds.compat import old_lds_to_new_lds

@@ -77,7 +77,7 @@ class LOSTDataset(object):
         try:
             self._parse_data()
         except TypeError as e:
-            pass
+            print('parsing: ', e)
         self.geom = LOSTGeometries()
         self.cropper = DSCropper(self.geom, self.fileman)
         
@@ -87,9 +87,15 @@ class LOSTDataset(object):
     
     def _parse_data(self):
         # parse anno_data (lists) to numpy array
+        def _parse(x):
+            try: 
+                return np.vstack(x).squeeze()
+            except:
+                return x
+        
         if 'anno_data' in self.df:
-            self.df.anno_data = self.df.anno_data.apply(
-                lambda x: np.vstack(x).squeeze())
+            self.df.anno_data = self.df.anno_data.apply(lambda x: _parse(x))
+                # lambda x: np.vstack(x).squeeze())
                     
             
     def to_parquet(self, path, df=None):
@@ -205,7 +211,7 @@ class LOSTDataset(object):
             col (str): column containing paths to files
         '''
         df = self._get_df(df)
-        copy_imgs(df=df, out_dir=out_dir, col=col, copy_path=copy_path,
+        copy_imgs(df=df, out_dir=out_dir, col=col, 
                   force_overwrite=force_overwrite, filesystem=self.fileman)
             
     

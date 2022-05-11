@@ -34,7 +34,7 @@ class Line(Geometry):
         
         new_lines = []
         if isinstance(intersection, MultiLineString):
-            new_lines = list(intersection)
+            new_lines = list(intersection.geoms)
         else:
             new_lines = [intersection]
             

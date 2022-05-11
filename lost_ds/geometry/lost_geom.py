@@ -39,7 +39,10 @@ class LOSTGeometries:
     def validate(self, data, dtype):
         geom = self._get_geometry(dtype)
         if geom is not None:
-            return geom.validate(data)
+            try:
+                return geom.validate(data)
+            except:
+                return False
         else: 
             return True
     

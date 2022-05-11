@@ -35,7 +35,7 @@ class Point(Geometry):
         
         new_points = []
         if isinstance(intersection, MultiPoint):
-            new_points = list(intersection)
+            new_points = list(intersection.geoms)
         else:
             new_points = [intersection]
             
