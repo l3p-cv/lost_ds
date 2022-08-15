@@ -74,6 +74,7 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
             
             if data_present.any() or write_empty:
                 crop_df['img_path'] = crop_path
+                crop_df.loc[crop_df['anno_data'].isnull(), ['anno_dtype', 'anno_format', 'anno_style']] = None
                 cropper.fs.write_img(crops[i], crop_path)
                 result_df.append(crop_df)
                 
