@@ -3,6 +3,7 @@ from lost_ds.geometry.api import LOSTGeometries
 from lost_ds.functional.api import(remove_empty,
                                    split_by_empty,
                                    split_by_img_path,
+                                   split_train_test,
                                    split_multilabels,
                                    remap_labels,
                                    remap_img_path,

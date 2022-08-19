@@ -12,6 +12,7 @@ from lost_ds.functional.validation import (validate_geometries,
 
 from lost_ds.functional.split import (split_by_empty,
                                       split_by_img_path,
+                                      split_train_test,
                                       split_multilabels)
 
 from lost_ds.functional.filter import (remove_empty,
@@ -492,7 +493,24 @@ class LOSTDataset(object):
         df = self._get_df(df)
         return split_by_empty(df, col)
     
-    
+    def split_train_test(self, test_size=0.2, val_size=0.2, stratify_col=None, df=None):
+        '''Split dataset based on img paths (for dataset with multiple 
+            entries for one image)
+        Args:
+            test_size (float): fraction of images in df that will be used for 
+                test dataset
+            val_size (float): fraction of images in df that will be used for 
+                test dataset
+            stratify_col (str): column to use for stratify split
+            df (pd.DataFrame): Dataframe to split
+        Returns: 
+            tuple: pd.DataFrames with dataframe split (train, test, val).
+            if a size is 0.0 it will return None at the according place
+        '''
+        df = self._get_df(df)
+        return split_train_test(test_size=test_size, val_size=val_size, 
+                                stratify_col=stratify_col, df=df)
+        
     def split_by_img_path(self, test_size=0.2, val_size=0.2, df=None):
         '''Split dataset based on img paths (for dataset with multiple 
             entries for one image)

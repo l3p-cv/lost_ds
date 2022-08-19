@@ -1,3 +1,4 @@
+from random import shuffle
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -18,6 +19,32 @@ def split_by_empty(df, col='anno_data'):
     not_empty_df = df[~empty_bool]
     return not_empty_df, empty_df
 
+def split_train_test(test_size=0.2, val_size=0.2, stratify_col=None, df=None):
+    imgs = list(df.img_path.unique())
+    n_images = len(imgs)
+    stratify = None
+    ids = list(range(n_images))
+    if stratify_col:
+        stratify = list(df[stratify_col])
+        assert len(imgs) == len(df), 'Images cannot occur multiple time in dataset when using stratify!'
+    splits = []
+    for split in [test_size, val_size]:
+        if split:
+            size = int(split * n_images)
+            set_1, set_2, ids_1, ids_2 = train_test_split(imgs, ids, test_size=size, 
+                                                          shuffle=True, 
+                                                          stratify=stratify)
+            split_data = img_selection(list(set_2), df=df)
+            splits.append(split_data)
+            imgs = set_1
+            ids = ids_1
+            if stratify_col:
+                stratify = list(df.iloc[ids_1][stratify_col])
+        else:
+            splits.append(None)
+    train_data = img_selection(list(imgs), df=df)
+    splits.insert(0, train_data)
+    return tuple(splits)
 
 def split_by_img_path(test_size=0.2, val_size=0.2, df=None):
     '''Split dataset based on img paths (for dataset with multiple 
@@ -32,21 +59,7 @@ def split_by_img_path(test_size=0.2, val_size=0.2, df=None):
         tuple: pd.DataFrames with dataframe split (train, test, val).
         if a size is 0.0 it will return None at the according place
     '''
-    imgs = list(df.img_path.unique())
-    n_images = len(imgs)
-    splits = []
-    for split in [test_size, val_size]:
-        if split:
-            size = int(split * n_images)
-            set_1, set_2 = train_test_split(imgs, test_size=size)
-            split_data = img_selection(list(set_2), df=df)
-            splits.append(split_data)
-            imgs = set_1
-        else:
-            splits.append(None)
-    train_data = img_selection(list(imgs), df=df)
-    splits.insert(0, train_data)
-    return tuple(splits)
+    return split_train_test(test_size, val_size, None, df)
 
 
 def split_multilabels(lbl_mapping, df:pd.DataFrame=None, col='anno_lbl'):
