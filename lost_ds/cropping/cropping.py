@@ -149,8 +149,8 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
         else:
             base_df = label_selection(base_labels, img_df, col=lbl_col)
         
-        crop_df = polygon_to_bbox(base_df.copy(), 'x1y1x2y2')
-        crop_df = crop_df[selection_mask(anno_dtype, crop_df, 'anno_dtype')]
+        crop_df = base_df[selection_mask(anno_dtype, base_df, 'anno_dtype')].copy()
+        crop_df = polygon_to_bbox(crop_df, 'x1y1x2y2')
         
         img = fs.read_img(img_path)
         im_h, im_w = img.shape[:2]
@@ -197,6 +197,7 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
             # crop_anno[center_lbl_key] = row[lbl_col]
             # crop_anno[center_lbl_key] = crop_anno[center_lbl_key].apply(lambda x: row[lbl_col])
             ret_df.append(crop_anno)
+            
         if len(ret_df):
             return pd.concat(ret_df)
         else: 
