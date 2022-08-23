@@ -1,4 +1,5 @@
-
+import os
+from typing import Union
 from joblib import Parallel, cpu_count, delayed 
 import pandas as pd 
 import numpy as np 
@@ -7,8 +8,10 @@ from lost_ds.functional.split import split_by_empty
 from lost_ds.functional.validation import (validate_empty_images, 
                                            validate_img_paths,
                                            validate_single_labels)
-from lost_ds.functional.transform import (to_abs, to_rel,
-                                          transform_bbox_style)
+from lost_ds.functional.transform import (polygon_to_bbox, to_abs, to_rel,
+                                          transform_bbox_style, to_coco)
+from lost_ds.io.file_man import FileMan
+import fsspec
 from lost_ds.util import get_fs
 
 
@@ -66,6 +69,77 @@ def bbox_nms(df: pd.DataFrame, lbl_col='anno_lbl', method='nms', iou_thr=0.5,
  
     return pd.concat(results)
 
+
+def coco_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, out_dir=None, 
+              filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None):
+    from pycocotools.coco import COCO
+    from pycocotools.cocoeval import COCOeval
+    filesystem = get_fs(filesystem)
+    if out_dir is None:
+        out_dir = '/tmp/coco_eval'
+        filesystem.makedirs(out_dir)
+    gt_json = os.path.join(out_dir, 'gt.json')
+    pred_json = os.path.join(out_dir, 'pred.json')
+    
+    # to coco
+    coco_gt = to_coco(gt_df, json_path=gt_json, filesystem=filesystem)
+    coco_pred = to_coco(pred_df, json_path=pred_json, filesystem=filesystem)
+    coco_gt = COCO(gt_json)
+    coco_pred = COCO(pred_json)
+    
+    # coco eval
+    coco_eval = COCOeval(coco_gt, coco_pred, iouType='bbox')
+    coco_eval.evaluate()
+    coco_eval.accumulate()
+    coco_eval.summarize()
+    
+    return coco_eval
+    
+
+def voc_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, iou_threshold=0.5,
+             APMethod='AllPointsInterpolation', out_dir=None,
+             filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None):
+    from podm.metrics import BoundingBox, get_pascal_voc_metrics, MethodAveragePrecision
+    
+    # prepare dataset
+    gt_df = validate_single_labels(validate_empty_images(polygon_to_bbox(to_abs(gt_df), 'x1y1x2y2')), dst_col='anno_lbl')
+    pred_df = validate_single_labels(transform_bbox_style('x1y1x2y2', to_abs(pred_df)), dst_col='anno_lbl')
+    
+    def _cast_df(df):
+        boxes = list()
+        for path, path_df in df.groupby('img_path'):
+            if not path_df['anno_data'].notnull().any():
+                continue
+            for idx, row in path_df.iterrows():
+                bb = BoundingBox.of_bbox(row.img_path, row.anno_lbl,
+                                        *list(row.anno_data.flatten()), # ann.xtl, ann.ytl, ann.xbr, ann.ybr, 
+                                        row.anno_confidence)
+                boxes.append(bb)
+        return boxes    
+    
+    gt_bboxes = _cast_df(gt_df)
+    pred_bboxes = _cast_df(pred_df)
+    if 'allpoints' in APMethod.lower():
+        method = MethodAveragePrecision.AllPointsInterpolation
+    elif 'elevenpoints' in APMethod.lower():
+        method = MethodAveragePrecision.ElevenPointsInterpolation
+    results = get_pascal_voc_metrics(gt_bboxes, pred_bboxes, iou_threshold, method)
+
+    for cls, metric in results.items():
+        label = metric.label
+        print(f'lbl/cls: {np.unique([label, cls])}')
+        print('ap', metric.ap)
+        print('precision', metric.precision)
+        print('interpolated_recall', metric.interpolated_recall)
+        print('interpolated_precision', metric.interpolated_precision)
+        print('tp', metric.tp)
+        print('fp', metric.fp)
+        print('fn', metric.num_groundtruth - metric.tp)
+        print('num_groundtruth', metric.num_groundtruth)
+        print('num_detection', metric.num_detection)
+
+    return results
+    
 
 def detection_dataset(df, lbl_col='anno_lbl', det_col='det_lbl', 
                       bbox_style='x1y1x2y2', use_empty_images=False, 

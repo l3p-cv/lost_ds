@@ -1,6 +1,7 @@
 import os 
 import json
 from multiprocessing import Process
+from threading import Thread
 from typing import Union
 
 from tqdm import tqdm
@@ -9,13 +10,14 @@ import numpy as np
 import fsspec
 from joblib import Parallel, delayed
 from lost_ds.copy import copy_imgs
-from lost_ds.functional.validation import validate_img_paths
+from lost_ds.functional.validation import validate_img_paths, validate_single_labels
 
 from lost_ds.geometry.api import LOSTGeometries
 from lost_ds.geometry.bbox import Bbox
 from lost_ds.im_util import get_imagesize
 from lost_ds.io.file_man import FileMan
-from lost_ds.functional.filter import unique_labels
+from lost_ds.functional.filter import is_multilabel, unique_labels
+from lost_ds.util import get_fs
 
         
 def to_abs(df, path_col='img_path', 
@@ -157,10 +159,8 @@ def polygon_to_bbox(df, dst_style=None):
     return df
 
 
-# TODO: enable results format - idstinguish between gt and results
 # TODO: allow iscrowd 
 # TODO: implement segmentation to RLE for iscrowd==1 and results format
-# TODO: add score for results format
 # TODO: enable panoptic segmentation
 def to_coco(df, remove_invalid=True, lbl_col='anno_lbl', 
             supercategory_mapping=None, copy_path=None, rename_by_index=False,
@@ -183,6 +183,10 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     Returns:
         dict: containing coco data like {'categories': [...], 'images': [...], 'annotations': [...]}
     """
+    filesystem = get_fs(filesystem)
+    df = validate_single_labels(df, lbl_col, 'coco_lbl')
+    lbl_col = 'coco_lbl'
+    assert not is_multilabel(df, lbl_col), 'Provided lbl-col {} contains multilabels'
     df = validate_img_paths(df, remove_invalid, filesystem)
     df = transform_bbox_style('xywh', df)
     df = to_abs(df, filesystem=filesystem)
@@ -193,7 +197,7 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     annos = list()
     
     # COCO-categories
-    u_lbls = unique_labels(df, lbl_col)
+    u_lbls = unique_labels(df[(df['anno_data'].notnull()) & (df[lbl_col].notnull())], lbl_col)
     lbl_to_id = dict()
     for lbl_id, lbl in enumerate(u_lbls):
         supercategory = None if supercategory_mapping is None else supercategory_mapping[lbl]
@@ -204,7 +208,7 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     
     copy_process = list()
     if copy_path is None:
-        root_dirs = df['img_path'].apply(lambda x: os.path.join(x.split('/')[:-1])).unique()
+        root_dirs = df['img_path'].apply(lambda x: '/'.join(x.split('/')[:-1])).unique()
         assert len(root_dirs) == 1, f'COCO-Dataset images located in multiple different dirs {root_dirs}. ' \
             'You can use copy_path argument to copy the entire dataset.'
     else:
@@ -212,9 +216,10 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
         
     for img_path in img_paths:
         
+        img_id = len(imgs) + 1
+        
         # COCO-imgs
         im_h, im_w = get_imagesize(img_path)
-        img_id = len(imgs) + 1
         filename = img_path.split('/')[-1]
         if copy_path is not None:
             file_ending = img_path.split('.')[-1]
@@ -222,38 +227,65 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
                 filename = f'{img_id:012d}.{file_ending}'
             dst_file = os.path.join(copy_path, filename)
             # if not filesystem.exists(dst_file):
-            p = Process(target=filesystem.copy, args=(img_path, dst_file,))
+            # p = Process(target=filesystem.copy, args=(img_path, dst_file,), daemon=True)
+            p = Thread(target=filesystem.copy, args=(img_path, dst_file,), daemon=True)
             copy_process.append(p)
             p.start()
             
-        imgs.append({"id": img_id,
-                     "width": im_w,
-                     "height": im_h,
-                     "file_name": filename,
-                     "org_path": img_path,
+        imgs.append({"org_path": img_path,      # custom
+                     "id": img_id,              # int, 
+                     "width": im_w,             # int, 
+                     "height": im_h,            # int, 
+                     "file_name": filename,     # str, 
+                     "license": None,           # int, 
+                     "flickr_url": None,        # str, 
+                     "coco_url": None,          # str, 
+                     "date_captured": None,     # datetime,
                      })
         
         # COCO-annos
         img_df = df[df['img_path']==img_path]
+        if not img_df['anno_data'].notnull().any():
+            continue
         for _, row in img_df.iterrows():
             anno_type = row['anno_dtype']
-            segmentation = None
-            bbox = None
+            anno = {"id": len(annos) + 1,
+                    "image_id": img_id,
+                    "category_id": lbl_to_id[row[lbl_col]],
+                    "iscrowd": 0,
+                    }
+            area = 0
+            if 'anno_confidence' in row.keys():
+                if row['anno_confidence']:
+                    if row['anno_confidence'] > 0:
+                        score = float(row['anno_confidence'])
+                        anno['score'] = score
             if anno_type == 'polygon':
                 segmentation = [row['anno_data'].flatten().tolist()]
                 bbox = list(LOSTGeometries().poly_to_bbox(row['anno_data'], 'xywh'))
-            annos.append({"id": len(annos) + 1,
-                          "image_id": img_id,
-                          "category_id": lbl_to_id[row[lbl_col]],
-                          "iscrowd": 0,
-                          "segmentation": segmentation,
-                          "bbox": bbox,
-                          "area": bbox[2] * bbox[3],
-                          })
+                area = bbox[2] * bbox[3]
+                anno['segmentation'] = segmentation
+                anno['bbox'] = bbox
+                anno['area'] = area
+            elif anno_type == 'bbox':
+                bbox = list(LOSTGeometries().transform_bbox_style(row['anno_data'], row['anno_style'], 'xywh'))
+                area = bbox[2] * bbox[3]
+                anno['bbox'] = bbox
+                anno['area'] = area
+            elif anno_type is None:
+                pass
+            else:
+                raise Exception(f'Unsupported type {anno_type}')
+            if area:
+                annos.append(anno)
 
-    coco_anno = {"categories": categories,
+    coco_anno = {"info": {"year": None, "version": None, 
+                          "description": None, "contributor": None, 
+                          "url": None, "date_created": None},
+                 "licenses": [{"id": None, "name": None, "url": None}],
+                 "categories": categories,
                  "images": imgs,
-                 "annotations": annos
+                 "annotations": annos,
                  }
     
     if copy_path:
