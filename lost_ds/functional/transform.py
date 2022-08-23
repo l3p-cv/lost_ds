@@ -279,10 +279,17 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
             if area:
                 annos.append(anno)
 
-    coco_anno = {"info": {"year": None, "version": None, 
-                          "description": None, "contributor": None, 
-                          "url": None, "date_created": None},
-                 "licenses": [{"id": None, "name": None, "url": None}],
+    coco_anno = {"info": {"year": None, 
+                          "version": None, 
+                          "description": None, 
+                          "contributor": None, 
+                          "url": None, 
+                          "date_created": None
+                          },
+                 "licenses": [{"id": None, 
+                               "name": None, 
+                               "url": None
+                               }],
                  "categories": categories,
                  "images": imgs,
                  "annotations": annos,
