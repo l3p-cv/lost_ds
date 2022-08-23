@@ -47,7 +47,8 @@ from lost_ds.vis.api import (vis_sample,
 from lost_ds.segmentation.api import (semantic_segmentation, 
                                       segmentation_to_lost)
 
-from lost_ds.detection.api import (detection_dataset, bbox_nms)
+from lost_ds.detection.api import (detection_dataset, bbox_nms, coco_eval, 
+                                   voc_eval)
 
 from lost_ds.util import (get_fs, 
                           to_parquet)

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.4.1] - unreleased
 ### Added
 - method `split_train_test` which allows the stratify option for i.e. classification datasets
+- `coco_eval` method for detection (mAP, Average Recall)
+- `voc_eval` method for detection (tp, fp, fn, precision, revall, ap)
+- `to_coco` improvements and bugfixes
 ## [0.4.0] - 2022-05-01 
 ### Changed
 - file_man: Allow other Fsspec filesystems
