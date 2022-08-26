@@ -1,5 +1,6 @@
 import pandas as pd 
 import numpy as np
+from joblib import Parallel, delayed 
 
 from lost_ds.functional.filter import is_multilabel
 from lost_ds.functional.split import split_by_empty
@@ -68,14 +69,22 @@ def validate_img_paths(df, remove_invalid=True, filesystem=None):
     df = df.copy()
     fs = get_fs(filesystem)
     images = list(df.img_path.unique())
-    valid_images = []
-    invalid_images = []
-    for image_path in images:
+    def _validate_path(image_path):
+        valid_images = []
+        invalid_images = []
         exist = fs.exists(image_path)
         if exist:
             valid_images.append(image_path)
         elif not exist:
             invalid_images.append(image_path)
+        return valid_images, invalid_images
+    
+    result = Parallel(-1)(delayed(_validate_path)(p) for p in images)
+    valid_images, invalid_images = list(), list()
+    for r in result:
+        valid_images += r[0]
+        invalid_images += r[1]
+    
     assert len(valid_images) + len(invalid_images) == len(images)
     if len(invalid_images):
         if remove_invalid:
