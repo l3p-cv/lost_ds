@@ -189,7 +189,7 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     assert not is_multilabel(df, lbl_col), 'Provided lbl-col {} contains multilabels'
     df = validate_img_paths(df, remove_invalid, filesystem)
     df = transform_bbox_style('xywh', df)
-    df = to_abs(df, filesystem=filesystem)
+    df = to_abs(df, filesystem=filesystem, verbose=False)
     img_paths = df['img_path'].unique()
     
     categories = list()
