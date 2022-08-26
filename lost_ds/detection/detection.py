@@ -3,6 +3,7 @@ from typing import Union
 from joblib import Parallel, cpu_count, delayed 
 import pandas as pd 
 import numpy as np 
+import matplotlib.pyplot as plt 
 
 from lost_ds.functional.split import split_by_empty
 from lost_ds.functional.validation import (validate_empty_images, 
@@ -91,19 +92,45 @@ def coco_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, out_dir=None,
     coco_eval = COCOeval(coco_gt, coco_pred, iouType='bbox')
     coco_eval.evaluate()
     coco_eval.accumulate()
-    coco_eval.summarize()
     
-    return coco_eval
+    class COCOResults:
+        def __init__(self, coco_eval:COCOeval):
+            self.coco_eval = coco_eval
+            classes = coco_eval.params.catIds
+            ious = {'class': [], 'ious': [], 'mean_iou':[]}
+            for cl in classes:
+                class_ious = dict((k, v) for k,v in coco_eval.ious.items() if k[1]==cl)
+                max_ious = [iou.max(axis=0).reshape((-1,1)) for iou in class_ious.values() if len(iou)]
+                max_ious = np.concatenate(max_ious, 0)
+                ious['class'].append(cl)
+                ious['ious'].append(list(max_ious.reshape((-1))))
+                ious['mean_iou'].append(max_ious.mean())
+            self.all_IoUs = np.concatenate(ious['ious'], -1)
+            self.mean_IoU = self.all_IoUs.mean()
+            self.class_IoUs = pd.DataFrame(ious)
+            keys = ['APcoco', 'AP50', 'AP75', 'APcoco_small', 'APcoco_medium', 
+                    'APcoco_large', 'AR1', 'AR10', 'AR100', 'AR100_small', 
+                    'AR100_medium', 'AR100_large']
+            self.coco_results = {k:v for k,v in zip(keys, coco_eval.stats)}
+        
+        def summarize(self):
+            self.coco_eval.summarize()
+            print('mIoU per class:')
+            print(self.class_IoUs[['class', 'mean_iou']])
+            print('\nmIoU all classes: ', self.mean_IoU)
+            
+    coco_results = COCOResults(coco_eval)
+    
+    return coco_results
     
 
 def voc_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, iou_threshold=0.5,
-             APMethod='AllPointsInterpolation', out_dir=None,
-             filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None):
+             APMethod='AllPointsInterpolation'):
     from podm.metrics import BoundingBox, get_pascal_voc_metrics, MethodAveragePrecision
     
     # prepare dataset
-    gt_df = validate_single_labels(validate_empty_images(polygon_to_bbox(to_abs(gt_df), 'x1y1x2y2')), dst_col='anno_lbl')
-    pred_df = validate_single_labels(transform_bbox_style('x1y1x2y2', to_abs(pred_df)), dst_col='anno_lbl')
+    gt_df = validate_single_labels(validate_empty_images(polygon_to_bbox(to_abs(gt_df, verbose=False), 'x1y1x2y2')), dst_col='anno_lbl')
+    pred_df = validate_single_labels(transform_bbox_style('x1y1x2y2', to_abs(pred_df, verbose=False)), dst_col='anno_lbl')
     
     def _cast_df(df):
         boxes = list()
@@ -123,23 +150,52 @@ def voc_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, iou_threshold=0.5,
         method = MethodAveragePrecision.AllPointsInterpolation
     elif 'elevenpoints' in APMethod.lower():
         method = MethodAveragePrecision.ElevenPointsInterpolation
-    results = get_pascal_voc_metrics(gt_bboxes, pred_bboxes, iou_threshold, method)
-
-    for cls, metric in results.items():
-        label = metric.label
-        print(f'lbl/cls: {np.unique([label, cls])}')
-        print('ap', metric.ap)
-        print('precision', metric.precision)
-        print('interpolated_recall', metric.interpolated_recall)
-        print('interpolated_precision', metric.interpolated_precision)
-        print('tp', metric.tp)
-        print('fp', metric.fp)
-        print('fn', metric.num_groundtruth - metric.tp)
-        print('num_groundtruth', metric.num_groundtruth)
-        print('num_detection', metric.num_detection)
-
-    return results
     
+    if not isinstance(iou_threshold, (list, np.ndarray)):
+        iou_threshold = [iou_threshold]
+    
+    data = {'class':[], 'iou_threshold':[], 'ap':[], 'precision':[], 'recall':[], 
+            'interpolated_precision':[], 'interpolated_recall':[], 
+            'tp':[], 'fp':[], 'fn':[], 'n_gt':[], 'n_det':[]}
+    
+    for iou_th in iou_threshold:
+        results = get_pascal_voc_metrics(gt_bboxes, pred_bboxes, iou_th, method)    
+        for cls, metric in results.items():
+            data['class'].append(cls)
+            data['iou_threshold'].append(float(iou_th))
+            data['ap'].append(metric.ap)
+            data['precision'].append(metric.precision)
+            data['recall'].append(metric.recall)
+            data['interpolated_precision'].append(metric.interpolated_precision)
+            data['interpolated_recall'].append(metric.interpolated_recall)
+            data['tp'].append(metric.tp)
+            data['fp'].append(metric.fp)
+            data['fn'].append(metric.num_groundtruth - metric.tp)
+            data['n_gt'].append(metric.num_groundtruth)
+            data['n_det'].append(metric.num_detection)
+    
+    df = pd.DataFrame(data)
+    
+    return df
+
+
+def voc_score_iou_multiplex(gt_df, pred_df, score_key='anno_confidence', 
+                            score_range=[0.25, 0.75], score_stepwidth=0.05, 
+                            iou_range=[0.25, 0.9], iou_stepwidth=0.05):
+    from multiprocessing.pool import ThreadPool
+    score_shift = np.arange(*score_range, score_stepwidth)
+    def shift_score(score_th):
+        iou_shift = np.arange(*iou_range, iou_stepwidth)
+        det_df = pred_df.copy()
+        df = det_df[det_df[score_key] >= score_th]
+        voc_df = voc_eval(gt_df.copy(), df, iou_threshold=iou_shift)
+        voc_df['score_threshold'] = score_th
+        return voc_df
+    with ThreadPool(cpu_count()) as tp:
+        evals = tp.map(shift_score, score_shift)
+    voc_df = pd.concat(evals)
+    return voc_df
+
 
 def detection_dataset(df, lbl_col='anno_lbl', det_col='det_lbl', 
                       bbox_style='x1y1x2y2', use_empty_images=False, 
