@@ -143,7 +143,8 @@ def voc_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, iou_threshold=0.5,
                                         row.anno_confidence)
                 boxes.append(bb)
         return boxes    
-    
+    if not 'anno_confidence' in gt_df.keys():
+        gt_df['anno_confidence'] = 1
     gt_bboxes = _cast_df(gt_df)
     pred_bboxes = _cast_df(pred_df)
     if 'allpoints' in APMethod.lower():
