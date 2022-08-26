@@ -48,7 +48,7 @@ from lost_ds.segmentation.api import (semantic_segmentation,
                                       segmentation_to_lost)
 
 from lost_ds.detection.api import (detection_dataset, bbox_nms, coco_eval, 
-                                   voc_eval)
+                                   voc_eval, voc_score_iou_multiplex)
 
 from lost_ds.util import (get_fs, 
                           to_parquet)
