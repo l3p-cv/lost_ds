@@ -74,7 +74,10 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
             
             if data_present.any() or write_empty:
                 crop_df['img_path'] = crop_path
-                crop_df.loc[crop_df['anno_data'].isnull(), ['anno_dtype', 'anno_format', 'anno_style']] = None
+                crop_df['crop_position'] = crop_df['img_path'].apply(lambda x: position)
+                crop_df.loc[crop_df['anno_data'].isnull(), ['anno_dtype', 
+                                                            'anno_format', 
+                                                            'anno_style']] = None
                 cropper.fs.write_img(crops[i], crop_path)
                 result_df.append(crop_df)
                 
@@ -193,6 +196,7 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
             crop_path = os.path.join(dst_dir, crop_name)
             fs.write_img(crop, crop_path)
             crop_anno['img_path'] = crop_path
+            crop_anno['crop_position'] = crop_anno['img_path'].apply(lambda x: [minx, miny, maxx, maxy])
             crop_anno.loc[idx, center_lbl_key] = True
             # crop_anno[center_lbl_key] = row[lbl_col]
             # crop_anno[center_lbl_key] = crop_anno[center_lbl_key].apply(lambda x: row[lbl_col])
@@ -210,5 +214,6 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
     # crop_dfs = []
     # for path, df in tqdm(df.groupby('img_path'), desc='crop dataset'):
     #     crop_dfs.append(crop_and_recalculate(path, df))
-                                    
+    
+    # TODO: return empty df if noting to crop
     return pd.concat(crop_dfs)
