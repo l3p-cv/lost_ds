@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `voc_eval` method for detection (tp, fp, fn, precision, revall, ap)
 - `to_coco` improvements and bugfixes
 - `voc_score_iou_multiplex` method: shifting bbox score and iou_thresholds to find optimal thresolds
+- cropping method return additional column 'crop_position' now
+
 ## [0.4.0] - 2022-05-01 
 ### Changed
 - file_man: Allow other Fsspec filesystems
