@@ -645,7 +645,7 @@ class LOSTDataset(object):
     #
     
     def vis_and_store(self, out_dir, df=None, lbl_col='anno_lbl', 
-                      color=(0, 0, 255), line_thickness=2, fontscale=2, 
+                      color=(0, 0, 255), line_thickness='auto', fontscale='auto', 
                       radius=2):
         '''Visualize annotations and store them to a folder
 
