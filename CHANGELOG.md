@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `to_coco` improvements and bugfixes
 - `voc_score_iou_multiplex` method: shifting bbox score and iou_thresholds to find optimal thresolds
 - cropping method return additional column 'crop_position' now
+- added arg 'random_state' for dataset-splitting
 
 ## [0.4.0] - 2022-05-01 
 ### Changed
