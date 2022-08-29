@@ -3,7 +3,7 @@ from typing import Iterable
 
 from tqdm import tqdm
 import pandas as pd 
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, cpu_count
 from lost_ds.functional.filter import label_selection, selection_mask
 import numpy as np
 from lost_ds.functional.transform import to_abs, polygon_to_bbox

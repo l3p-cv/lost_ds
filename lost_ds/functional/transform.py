@@ -8,7 +8,7 @@ from tqdm import tqdm
 import pandas as pd 
 import numpy as np
 import fsspec
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, cpu_count
 from lost_ds.copy import copy_imgs
 from lost_ds.functional.validation import validate_img_paths, validate_single_labels
 
