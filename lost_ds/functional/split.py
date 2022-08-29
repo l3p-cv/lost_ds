@@ -21,6 +21,8 @@ def split_by_empty(df, col='anno_data'):
 
 def split_train_test(test_size=0.2, val_size=0.2, stratify_col=None, df=None,
                      random_state=42):
+    if not len(df):
+        return df, df, df
     imgs = list(df.img_path.unique())
     n_images = len(imgs)
     stratify = None
