@@ -1,4 +1,5 @@
 from os import name
+from random import random
 import numpy as np
 
 from lost_ds.io.file_man import FileMan
@@ -493,7 +494,8 @@ class LOSTDataset(object):
         df = self._get_df(df)
         return split_by_empty(df, col)
     
-    def split_train_test(self, test_size=0.2, val_size=0.2, stratify_col=None, df=None):
+    def split_train_test(self, test_size=0.2, val_size=0.2, stratify_col=None, 
+                         df=None, random_state=42):
         '''Split dataset based on img paths (for dataset with multiple 
             entries for one image)
         Args:
@@ -509,9 +511,11 @@ class LOSTDataset(object):
         '''
         df = self._get_df(df)
         return split_train_test(test_size=test_size, val_size=val_size, 
-                                stratify_col=stratify_col, df=df)
+                                stratify_col=stratify_col, df=df, 
+                                random_state=random_state)
         
-    def split_by_img_path(self, test_size=0.2, val_size=0.2, df=None):
+    def split_by_img_path(self, test_size=0.2, val_size=0.2, df=None, 
+                          random_state=42):
         '''Split dataset based on img paths (for dataset with multiple 
             entries for one image)
         Args:
@@ -525,7 +529,8 @@ class LOSTDataset(object):
             if a size is 0.0 it will return None at the according place
         '''
         df = self._get_df(df)
-        return split_by_img_path(test_size=test_size, val_size=val_size, df=df)
+        return split_by_img_path(test_size=test_size, val_size=val_size, df=df, 
+                                 random_state=random_state)
     
     
     def split_multilabels(self, lbl_mapping, df=None, col='anno_lbl', inplace=False):
