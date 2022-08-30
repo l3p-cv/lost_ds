@@ -768,9 +768,10 @@ class LOSTDataset(object):
     #
     
     def semantic_segmentation(self, order, dst_dir, fill_value, df=None, 
-                              anno_dtypes=['polygon'], lbl_col='anno_lbl', 
-                              dst_path_col='seg_path', dst_lbl_col='seg_lbl', 
-                              line_thickness=None, radius=None, inplace=False):
+                              anno_dtypes=['polygon'], use_empty=False, 
+                              lbl_col='anno_lbl', dst_path_col='seg_path', 
+                              dst_lbl_col='seg_lbl', line_thickness=None, 
+                              radius=None, inplace=False):
         '''Create semantic segmentations from polygon-annos
     
         Args:
@@ -803,9 +804,10 @@ class LOSTDataset(object):
                 segmentation looked up in order for creation
         '''
         df = self._get_df(df)
-        df = semantic_segmentation(order, dst_dir, fill_value, df, anno_dtypes, 
-                                   lbl_col, dst_path_col, dst_lbl_col, 
-                                   line_thickness, radius, self.fileman)
+        df = semantic_segmentation(order, dst_dir, fill_value, df, anno_dtypes,
+                                   use_empty, lbl_col, dst_path_col, 
+                                   dst_lbl_col, line_thickness, radius, 
+                                   self.fileman)
         return self._update_inplace(df, inplace)
     
     
