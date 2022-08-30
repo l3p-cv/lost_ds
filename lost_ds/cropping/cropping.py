@@ -75,9 +75,6 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
             if data_present.any() or write_empty:
                 crop_df['img_path'] = crop_path
                 crop_df['crop_position'] = crop_df['img_path'].apply(lambda x: position)
-                crop_df.loc[crop_df['anno_data'].isnull(), ['anno_dtype', 
-                                                            'anno_format', 
-                                                            'anno_style']] = None
                 cropper.fs.write_img(crops[i], crop_path)
                 result_df.append(crop_df)
                 
@@ -89,8 +86,15 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
     # crop_dfs = []
     # for path in tqdm(df.img_path.unique(), desc='crop dataset'):
     #     crop_dfs.append(crop_and_recalculate(path))
-        
-    return pd.concat(crop_dfs)
+    
+    # set crops from formerly non empty annos to empty
+    ret_df = pd.concat(crop_dfs)
+    anno_keys = [k for k in ret_df.keys() if 'anno' in k]
+    ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = ret_df.loc[ret_df['anno_data'].isnull(), anno_keys].apply(lambda row: None)
+    anno_keys = [k for k in ret_df.keys() if 'anno_lbl' in k]
+    ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = ret_df.loc[ret_df['anno_data'].isnull(), anno_keys].apply(lambda row: np.array([]))
+    
+    return ret_df
 
 
 def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0, 
