@@ -90,9 +90,9 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
     # set crops from formerly non empty annos to empty
     ret_df = pd.concat(crop_dfs)
     anno_keys = [k for k in ret_df.keys() if 'anno' in k]
-    ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = ret_df.loc[ret_df['anno_data'].isnull(), anno_keys].apply(lambda row: None)
+    ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = None
     anno_keys = [k for k in ret_df.keys() if 'anno_lbl' in k]
-    ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = ret_df.loc[ret_df['anno_data'].isnull(), anno_keys].apply(lambda row: np.array([], 'object'))
+    ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = ret_df[ret_df['anno_data'].isnull()]['anno_data'].apply(lambda x: [np.array([], 'object')]*len(anno_keys))
     
     return ret_df
 
