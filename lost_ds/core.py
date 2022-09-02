@@ -495,7 +495,7 @@ class LOSTDataset(object):
         return split_by_empty(df, col)
     
     def split_train_test(self, test_size=0.2, val_size=0.2, stratify_col=None, 
-                         df=None, col='anno_lbl', random_state=42):
+                         df=None, col='img_path', random_state=42):
         '''Split dataset based on img paths (for dataset with multiple 
             entries for one image)
         Args:
