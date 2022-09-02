@@ -1,6 +1,6 @@
 import pandas as pd 
 import numpy as np
-from joblib import Parallel, delayed 
+from joblib import Parallel, delayed, cpu_count
 
 from lost_ds.functional.filter import is_multilabel
 from lost_ds.functional.split import split_by_empty

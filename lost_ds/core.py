@@ -1,4 +1,5 @@
 from os import name
+from random import random
 import numpy as np
 
 from lost_ds.io.file_man import FileMan
@@ -493,7 +494,8 @@ class LOSTDataset(object):
         df = self._get_df(df)
         return split_by_empty(df, col)
     
-    def split_train_test(self, test_size=0.2, val_size=0.2, stratify_col=None, df=None):
+    def split_train_test(self, test_size=0.2, val_size=0.2, stratify_col=None, 
+                         df=None, col='anno_lbl', random_state=42):
         '''Split dataset based on img paths (for dataset with multiple 
             entries for one image)
         Args:
@@ -509,9 +511,11 @@ class LOSTDataset(object):
         '''
         df = self._get_df(df)
         return split_train_test(test_size=test_size, val_size=val_size, 
-                                stratify_col=stratify_col, df=df)
+                                stratify_col=stratify_col, df=df, col=col,
+                                random_state=random_state)
         
-    def split_by_img_path(self, test_size=0.2, val_size=0.2, df=None):
+    def split_by_img_path(self, test_size=0.2, val_size=0.2, df=None, 
+                          random_state=42):
         '''Split dataset based on img paths (for dataset with multiple 
             entries for one image)
         Args:
@@ -525,7 +529,8 @@ class LOSTDataset(object):
             if a size is 0.0 it will return None at the according place
         '''
         df = self._get_df(df)
-        return split_by_img_path(test_size=test_size, val_size=val_size, df=df)
+        return split_by_img_path(test_size=test_size, val_size=val_size, df=df, 
+                                 random_state=random_state)
     
     
     def split_multilabels(self, lbl_mapping, df=None, col='anno_lbl', inplace=False):
@@ -640,7 +645,7 @@ class LOSTDataset(object):
     #
     
     def vis_and_store(self, out_dir, df=None, lbl_col='anno_lbl', 
-                      color=(0, 0, 255), line_thickness=2, fontscale=2, 
+                      color=(0, 0, 255), line_thickness='auto', fontscale='auto', 
                       radius=2):
         '''Visualize annotations and store them to a folder
 
@@ -763,9 +768,10 @@ class LOSTDataset(object):
     #
     
     def semantic_segmentation(self, order, dst_dir, fill_value, df=None, 
-                              anno_dtypes=['polygon'], lbl_col='anno_lbl', 
-                              dst_path_col='seg_path', dst_lbl_col='seg_lbl', 
-                              line_thickness=None, radius=None, inplace=False):
+                              anno_dtypes=['polygon'], use_empty=False, 
+                              lbl_col='anno_lbl', dst_path_col='seg_path', 
+                              dst_lbl_col='seg_lbl', line_thickness=None, 
+                              radius=None, inplace=False):
         '''Create semantic segmentations from polygon-annos
     
         Args:
@@ -798,9 +804,10 @@ class LOSTDataset(object):
                 segmentation looked up in order for creation
         '''
         df = self._get_df(df)
-        df = semantic_segmentation(order, dst_dir, fill_value, df, anno_dtypes, 
-                                   lbl_col, dst_path_col, dst_lbl_col, 
-                                   line_thickness, radius, self.fileman)
+        df = semantic_segmentation(order, dst_dir, fill_value, df, anno_dtypes,
+                                   use_empty, lbl_col, dst_path_col, 
+                                   dst_lbl_col, line_thickness, radius, 
+                                   self.fileman)
         return self._update_inplace(df, inplace)
     
     

@@ -8,7 +8,7 @@ from tqdm import tqdm
 import pandas as pd 
 import numpy as np
 import fsspec
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, cpu_count
 from lost_ds.copy import copy_imgs
 from lost_ds.functional.validation import validate_img_paths, validate_single_labels
 
@@ -209,8 +209,8 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     copy_process = list()
     if copy_path is None:
         root_dirs = df['img_path'].apply(lambda x: '/'.join(x.split('/')[:-1])).unique()
-        assert len(root_dirs) == 1, f'COCO-Dataset images located in multiple different dirs {root_dirs}. ' \
-            'You can use copy_path argument to copy the entire dataset.'
+        # assert len(root_dirs) == 1, f'COCO-Dataset images located in multiple different dirs {root_dirs}. ' \
+        #     'You can use copy_path argument to copy the entire dataset.'
     else:
         filesystem.makedirs(copy_path, True)
         

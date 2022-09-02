@@ -1,12 +1,14 @@
 import os
 
-from joblib.parallel import Parallel, delayed 
+import pandas as pd 
+from joblib.parallel import Parallel, delayed, cpu_count
 import numpy as np
 from tqdm import tqdm
-
 from lost_ds.functional.api import (remove_empty,
                                is_multilabel,
                                label_selection,
+                               split_by_empty,
+                               validate_empty_images
                                )
 from lost_ds.im_util import get_imagesize, get_fs
 from lost_ds.geometry.lost_geom import LOSTGeometries
@@ -39,8 +41,8 @@ def _get_and_validate_order(order, df, lbl_col, seg_lbl_col):
     return order, df
 
 
-def semantic_segmentation(order, dst_dir, fill_value, df, 
-                          anno_dtypes=['polygon'], lbl_col='anno_lbl', 
+def semantic_segmentation(order, dst_dir, fill_value, df, anno_dtypes=['polygon'], 
+                          use_empty=False, lbl_col='anno_lbl', 
                           dst_path_col='seg_path', dst_lbl_col='seg_lbl', 
                           line_thickness=None, radius=None, filesystem=None):
     '''Create semantic segmentations from polygon-annos
@@ -75,9 +77,18 @@ def semantic_segmentation(order, dst_dir, fill_value, df,
             segmentation looked up in order for creation
     '''
     fs = get_fs(filesystem)
+    df_empty = None
+    if use_empty:
+        df = validate_empty_images(df=df)
+        fill_value_key = list(order.keys())[list(order.values()).index(0)]
+        df.loc[df[lbl_col].isnull(), dst_lbl_col] = [fill_value_key]
+        df, df_empty = split_by_empty(df)        
     df = remove_empty(df=df, col='anno_data')
     order, df = _get_and_validate_order(order, df, lbl_col, dst_lbl_col)
     df = df[df.anno_dtype.isin(anno_dtypes)]
+    
+    # keep empty images if flag is set
+    df = pd.concat([df, df_empty])
     
     def generate_seg(image_path, img_df):
         geom = LOSTGeometries()
@@ -104,9 +115,9 @@ def semantic_segmentation(order, dst_dir, fill_value, df,
     
     # # sequential loop
     # path_map = dict()
-    # for path in tqdm(image_paths, desc='segmentation'):
-    #     seg_path = generate_seg(path)
-    #     path_map[path] = seg_path
+    # for path, img_df in tqdm(df.groupby('img_path'), desc='segmentation'):
+    #     p1, p2 = generate_seg(path, img_df)
+    #     path_map[p1] = p2
     
     # parallel loop
     paths = Parallel(n_jobs=-1)(delayed(generate_seg)(path, img_df) 
@@ -114,5 +125,6 @@ def semantic_segmentation(order, dst_dir, fill_value, df,
                                         df.groupby('img_path'), 
                                         desc='segmentation'))
     path_map = {im_path: seg_path for im_path, seg_path in paths}
+    
     df[dst_path_col] = df.img_path.apply(lambda x: path_map[x])
     return df

@@ -143,7 +143,8 @@ def voc_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, iou_threshold=0.5,
                                         row.anno_confidence)
                 boxes.append(bb)
         return boxes    
-    
+    if not 'anno_confidence' in gt_df.keys():
+        gt_df['anno_confidence'] = 1
     gt_bboxes = _cast_df(gt_df)
     pred_bboxes = _cast_df(pred_df)
     if 'allpoints' in APMethod.lower():
@@ -182,18 +183,21 @@ def voc_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, iou_threshold=0.5,
 def voc_score_iou_multiplex(gt_df, pred_df, score_key='anno_confidence', 
                             score_range=[0.25, 0.75], score_stepwidth=0.05, 
                             iou_range=[0.25, 0.9], iou_stepwidth=0.05):
-    from multiprocessing.pool import ThreadPool
     score_shift = np.arange(*score_range, score_stepwidth)
-    def shift_score(score_th):
+    def shift_score(score_th, gt, pred):
         iou_shift = np.arange(*iou_range, iou_stepwidth)
-        det_df = pred_df.copy()
-        df = det_df[det_df[score_key] >= score_th]
-        voc_df = voc_eval(gt_df.copy(), df, iou_threshold=iou_shift)
+        pred = pred[pred[score_key] >= score_th]
+        voc_df = voc_eval(gt, pred, iou_threshold=iou_shift)
         voc_df['score_threshold'] = score_th
         return voc_df
-    with ThreadPool(cpu_count()) as tp:
-        evals = tp.map(shift_score, score_shift)
+    # with ThreadPool(cpu_count()) as tp:
+    #     evals = tp.map(shift_score, score_shift)
+        
+    evals = Parallel(-1)(delayed(shift_score)(score_th, gt_df.copy(), pred_df.copy()) 
+                         for score_th in score_shift)
+    
     voc_df = pd.concat(evals)
+    
     return voc_df
 
 

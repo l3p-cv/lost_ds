@@ -1,7 +1,7 @@
 from shapely.geometry import Polygon, MultiPolygon
 import cv2
 from tqdm import tqdm
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, cpu_count
 import numpy as np 
 import pandas as pd 
 
