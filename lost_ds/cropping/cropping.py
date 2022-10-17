@@ -74,7 +74,9 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
             
             if data_present.any() or write_empty:
                 crop_df['img_path'] = crop_path
-                crop_df['crop_position'] = crop_df['img_path'].apply(lambda x: position)
+                # padding is ((top, bot), (left, right))
+                pad_y, pad_x = padding[0][0], padding[1][0]
+                crop_df['crop_position'] = crop_df['img_path'].apply(lambda x: position - [pad_x, pad_y, pad_x, pad_y])
                 cropper.fs.write_img(crops[i], crop_path)
                 result_df.append(crop_df)
                 
@@ -208,6 +210,7 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
             ret_df.append(crop_anno)
             
         if len(ret_df):
+            # print(len(pd.concat(ret_df)))
             return pd.concat(ret_df)
         else: 
             return None
