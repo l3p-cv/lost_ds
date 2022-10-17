@@ -382,7 +382,7 @@ class LOSTDataset(object):
         '''
         df = self._get_df(df)
         df = remap_labels(df, label_mapping, col, dst_col)
-        self._update_inplace(df, inplace)
+        return self._update_inplace(df, inplace)
     
     
     #
@@ -412,7 +412,7 @@ class LOSTDataset(object):
         '''
         df = self._get_df(df)
         df = to_rel(df, path_col, self.fileman, verbose)
-        self._update_inplace(df, inplace)
+        return self._update_inplace(df, inplace)
     
     
     def polygon_to_bbox(self, df=None, dst_style=None, inplace=False):
