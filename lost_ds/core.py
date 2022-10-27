@@ -689,7 +689,7 @@ class LOSTDataset(object):
     #
     
     def crop_dataset(self, dst_dir, crop_shape=(500, 500), overlap=(0, 0), 
-                     df=None, write_emtpy=False, fill_value=0, inplace=False):
+                     df=None, write_empty=False, fill_value=0, inplace=False):
         """Crop the entire dataset with fixed crop-shape
 
         Args:
@@ -706,7 +706,7 @@ class LOSTDataset(object):
         """
         df = self._get_df(df)
         df = crop_dataset(df=df, dst_dir=dst_dir, crop_shape=crop_shape, 
-                          overlap=overlap, write_empty=write_emtpy, 
+                          overlap=overlap, write_empty=write_empty, 
                           fill_value=fill_value, filesystem=self.fileman)
         return self._update_inplace(df, inplace)
     
