@@ -55,6 +55,8 @@ from lost_ds.segmentation.anno_from_seg import (segmentation_to_lost,
 
 from lost_ds.detection.detection import detection_dataset
 
+from lost_ds.masking.masking import mask_dataset
+
 from lost_ds.util import get_fs, to_parquet
 
 
@@ -294,14 +296,14 @@ class LOSTDataset(object):
 
         Args:
             imgs (list): list of imgs to select
-            invers (bool): get the selection if True, get the rest if False 
+            inverse (bool): get the selection if True, get the rest if False 
             df (pd.DataFrame): Frame to apply image selection
 
         Returns:
             pd.DataFrame: dataframe with image selection
         '''
         df = self._get_df(df)
-        df = img_selection(imgs=imgs, df=df, invers=inverse)
+        df = img_selection(imgs=imgs, df=df, inverse=inverse)
         return self._update_inplace(df, inplace)
     
     
@@ -876,4 +878,28 @@ class LOSTDataset(object):
         df = self._get_df(df)
         df = detection_dataset(df, lbl_col, det_col, bbox_style, 
                                use_empty_images, self.fileman)
+        return self._update_inplace(df, inplace)
+    
+    
+    #
+    #   Masking
+    #
+    
+    def mask_dataset(self, dst_dir, masking_labels, mask_value=0, inverse=False, 
+                     lbl_col='anno_lbl', df=None, inplace=False):
+        """mask images by annos of given label. Either mask the given annos itself 
+        (inverse=False) or everything but the annos (inverse=True)
+
+        Args:
+            dst_dir (str): destination folder
+            masking_labels (list): list of labels to use for masking
+            mask_value (int, optional): pixel value to use for mask. Defaults to 0.
+            inverse (bool, optional): fill the given annos with `mask_value` if True, and inverse if False. Defaults to False.
+            lbl_col (str, optional): column containing the labels. Defaults to 'anno_lbl'.
+            df (pd.DataFrame): dataframe to mask
+            inplace (bool): overwrite self.df with result df
+        """
+        df = self._get_df(df)
+        df = mask_dataset(df, dst_dir, masking_labels, mask_value, inverse, 
+                          lbl_col, self.fileman)
         return self._update_inplace(df, inplace)

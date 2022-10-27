@@ -89,18 +89,18 @@ def ignore_labels(labels, df, col='anno_lbl'):
     return df[~selection_mask(df=df, labels=labels, col=col)]
     
 
-def img_selection(imgs, df, invers=False):
+def img_selection(imgs, df, inverse=False):
     '''Get entries with a selection of labels from the dataframe
 
     Args:
         imgs (list): list of imgs to select
-        invers (bool): get the selection if True, get the rest if False 
+        inverse (bool): get the selection if True, get the rest if False 
         df (pd.DataFrame): Frame to apply image selection
 
     Returns:
         pd.DataFrame: dataframe with image selection
     '''
     selection_mask = df.img_path.isin(imgs)
-    if invers:
+    if inverse:
         selection_mask = ~selection_mask
     return df[selection_mask]
