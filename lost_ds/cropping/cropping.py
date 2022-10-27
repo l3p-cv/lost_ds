@@ -83,12 +83,12 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
         else:
             return None
     
-    crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, df) 
-                                    for path, df in tqdm(df.groupby('img_path'), 
+    crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, img_df) 
+                                    for path, img_df in tqdm(df.groupby('img_path'), 
                                                      desc='crop dataset'))
     # crop_dfs = []
-    # for path in tqdm(df.img_path.unique(), desc='crop dataset'):
-    #     crop_dfs.append(crop_and_recalculate(path))
+    # for path, img_df in tqdm(df.groupby('img_path'), desc='crop dataset'):
+    #     crop_dfs.append(crop_and_recalculate(path, img_df))
     
     # set crops from formerly non empty annos to empty
     ret_df = pd.concat(crop_dfs)
