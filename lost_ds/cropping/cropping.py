@@ -1,5 +1,4 @@
 import os
-from typing import Iterable
 
 from tqdm import tqdm
 import pandas as pd 
@@ -79,8 +78,10 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
                 crop_df['crop_position'] = crop_df['img_path'].apply(lambda x: position - [pad_x, pad_y, pad_x, pad_y])
                 cropper.fs.write_img(crops[i], crop_path)
                 result_df.append(crop_df)
-                
-        return pd.concat(result_df)
+        if len(result_df):
+            return pd.concat(result_df)
+        else:
+            return None
     
     crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, df) 
                                     for path, df in tqdm(df.groupby('img_path'), 
