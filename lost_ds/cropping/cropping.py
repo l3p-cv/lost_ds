@@ -69,7 +69,7 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
             crop_path = os.path.join(dst_dir, crop_name)
             crop_df = cropper.crop_anno(img_path, img_df, position, im_w, im_h, 
                                         padding)
-            data_present = crop_df.anno_data.notnull()
+            data_present = crop_df['anno_data'].notnull()
             
             if data_present.any() or write_empty:
                 crop_df['img_path'] = crop_path
