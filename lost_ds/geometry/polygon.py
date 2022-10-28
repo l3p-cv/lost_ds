@@ -29,11 +29,8 @@ class Polygon(Geometry):
         new_polys = []
         if isinstance(intersection, MultiPolygon):
             new_polys = list(intersection.geoms)
-            # new_polys = intersection.geoms
         elif isinstance(intersection, GeometryCollection):
             new_polys = [i for i in intersection if 'polygon' in str(type(i))]
-            # new_polys = intersection.geoms
-            # new_polys = [p for p in new_polys if 'polygon' in str(type(p))]
         else:
             new_polys = [intersection]
         
@@ -43,7 +40,10 @@ class Polygon(Geometry):
             
         new_polys = [p for p in new_polys if self.validate(p)]
         
-        return new_polys
+        if not len(new_polys):
+            return [np.nan]
+        else:
+            return new_polys
         
                         
     def validate(self, data):
