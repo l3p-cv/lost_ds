@@ -1,4 +1,5 @@
 import fsspec, cv2
+import shutil
 import pandas as pd 
 import numpy as np
 from PIL import Image
@@ -59,7 +60,11 @@ class FileMan(object):
         return self.fs.makedirs(path, exist_ok=exist_ok)
 
     def copy(self, src_path, dst_path, recursive=False):
-        self.fs.copy(src_path, dst_path, recursive)
+        try:
+            self.fs.copy(src_path, dst_path, recursive)
+        except shutil.SameFileError:
+            pass
+        
     
     def glob(self, path):
         return self.fs.glob(path)
