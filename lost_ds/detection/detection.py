@@ -11,18 +11,31 @@ from lost_ds.functional.validation import (validate_empty_images,
                                            validate_single_labels)
 from lost_ds.functional.transform import (polygon_to_bbox, to_abs, to_rel,
                                           transform_bbox_style, to_coco)
+from lost_ds.detection.bbox_merge import bbox_merge
 from lost_ds.io.file_man import FileMan
 import fsspec
 from lost_ds.util import get_fs
 
 
 def bbox_nms(df: pd.DataFrame, lbl_col='anno_lbl', method='nms', iou_thr=0.5, 
-             filesystem=None, **kwargs):
-    
+             filesystem=None, parallel=-1, **kwargs):
+    """apply nms to dataframe to suppress overlapping bboxes
+
+    Args:
+        df (pd.DataFrame): dataframe containing bboxes to supress
+        lbl_col (str, optional): columns containing labels. Defaults to 'anno_lbl'.
+        method (str, optional): one of {'nms', 'nmw', 'soft_nms', 'wbf', 'merge'}. Defaults to 'nms'.
+        iou_thr (float, optional): iou threshold when to supress bboxes. Defaults to 0.5.
+        filesystem (fsspec, optional): filesystem. Defaults to None.
+
+    Returns:
+        pd.DataFrame: dataframe with bboxes pruned by given method
+    """
     # refer to: https://github.com/ZFTurbo/Weighted-Boxes-Fusion
     from ensemble_boxes import (nms, non_maximum_weighted, soft_nms, 
                                 weighted_boxes_fusion)
-    
+    df = validate_empty_images(df)
+    df, empty_df = split_by_empty(df)
     bbox_df = df[df['anno_dtype']=='bbox']
     bbox_df = validate_single_labels(bbox_df, lbl_col, 'nms_lbl')
     got_scores = False
@@ -35,11 +48,11 @@ def bbox_nms(df: pd.DataFrame, lbl_col='anno_lbl', method='nms', iou_thr=0.5,
         bbox_df['anno_confidence'] = 1.0
     
     # make same format
-    bbox_df = to_rel(bbox_df, filesystem, False)
+    bbox_df = to_rel(bbox_df, filesystem=filesystem, verbose=False)
     bbox_df = transform_bbox_style('x1y1x2y2', bbox_df)
     
     fn_dict = {'nms': nms, 'nmw': non_maximum_weighted, 'soft_nms': soft_nms, 
-               'wbf': weighted_boxes_fusion}
+               'wbf': weighted_boxes_fusion, 'merge': bbox_merge}
     
     # run nms imagewise
     assert method in fn_dict.keys(), f'invalid nms method: {method} - ' \
@@ -53,7 +66,7 @@ def bbox_nms(df: pd.DataFrame, lbl_col='anno_lbl', method='nms', iou_thr=0.5,
         boxes, scores, labels = nms_fn([boxes_list], [scores_list], 
                                        [labels_list], iou_thr=iou_thr, **kwargs)
         n_boxes = len(boxes)
-        result = {'anno_data': list(boxes), 'anno_lbl':list(labels), 
+        result = {'anno_data': list(boxes), lbl_col:list(labels), 
                   'anno_style': ['x1y1x2y2']*n_boxes, 
                   'anno_dtype': ['bbox']*n_boxes, 'anno_format': ['rel']*n_boxes, 
                   'img_path': [img_path]*n_boxes}
@@ -61,14 +74,15 @@ def bbox_nms(df: pd.DataFrame, lbl_col='anno_lbl', method='nms', iou_thr=0.5,
             result['anno_confidence'] = list(scores)
         return pd.DataFrame(result)
 
-    # results = list()
-    # for img_path, img_df in bbox_df.groupby('img_path'):
-    #     results.append(apply_nms(img_path, img_df))
-
-    results = Parallel(cpu_count())(delayed(apply_nms)(img_path, img_df) 
-                          for img_path, img_df in bbox_df.groupby('img_path'))
+    if parallel:
+        results = Parallel(parallel)(delayed(apply_nms)(img_path, img_df) 
+                            for img_path, img_df in bbox_df.groupby('img_path'))
+    else:
+        results = list()
+        for img_path, img_df in bbox_df.groupby('img_path'):
+            results.append(apply_nms(img_path, img_df))
  
-    return pd.concat(results)
+    return pd.concat(results + [empty_df])
 
 
 def coco_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, out_dir=None, 
@@ -130,7 +144,7 @@ def voc_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, iou_threshold=0.5,
     
     # prepare dataset
     gt_df = validate_single_labels(validate_empty_images(polygon_to_bbox(to_abs(gt_df, verbose=False), 'x1y1x2y2')), dst_col='anno_lbl')
-    pred_df = validate_single_labels(transform_bbox_style('x1y1x2y2', to_abs(pred_df, verbose=False)), dst_col='anno_lbl')
+    pred_df = validate_single_labels(validate_empty_images(transform_bbox_style('x1y1x2y2', to_abs(pred_df, verbose=False))) , dst_col='anno_lbl')
     
     def _cast_df(df):
         boxes = list()
