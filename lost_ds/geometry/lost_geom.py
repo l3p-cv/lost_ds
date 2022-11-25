@@ -184,11 +184,15 @@ class LOSTGeometries:
             style = anno_style[i] 
             format_ = anno_format[i]
             lbl = anno_label[i]
+            if isinstance(color, list):
+                c = color[i]
+            else:
+                c = color
             conf = None
             if isinstance(anno_conf, list):
                 conf = anno_conf[i]
             text = self.get_text(lbl, conf)
-            c = self.get_color(lbl, color)
+            c = self.get_color(lbl, c)
             thickness = self.get_line_thickness(dtype, line_thickness)    
             geom = self._get_geometry(dtype)
             img = geom.draw(img, data, format_, style, text, c, thickness, 
@@ -202,8 +206,8 @@ class LOSTGeometries:
             label (string, list of string): single label or multi label
             confidence (float or list of float):
         '''
-        if label is None:
-            return label
+        if pd.isna(label):
+            return None
         conf = text = None
         lbl = label
         if isinstance(label, str):
@@ -212,9 +216,9 @@ class LOSTGeometries:
             lbl = [label]
         if len(lbl) == 0:
             return None
-        if isinstance(confidence, float):
+        if isinstance(confidence, float) and pd.notna(confidence):
             conf = [confidence]
-        if conf is not None:
+        if pd.notna(conf):
             text = [l+' ('+str(round(c, 2))+')' for c, l in zip(conf, lbl)]
         else:
             text = [l for l in lbl]
@@ -238,7 +242,7 @@ class LOSTGeometries:
             # just pick the first one in case of multilabel
             if isinstance(label, list):
                 lbl = label[0]
-            lbl = lbl[0]
+            lbl = lbl[0]        # ???
             if lbl in color.keys():
                 return color[lbl]
             else:
