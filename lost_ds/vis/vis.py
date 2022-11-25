@@ -42,8 +42,9 @@ def vis_sample(img, df, line_thickness=3, color=(0, 0, 255),
         df (pandas.DataFrame): The DataFrame that contains annoations to 
             visualize. If df is None a random image from df will be 
             sampled.
-        color (tuple, dict of tuple): colors (B,G,R) for all annos if tuple 
-            or dict for labelwise mapping like {label: color}
+        color (tuple, dict of tuple, string): colors (B,G,R) for all annos 
+            if tuple, dict for labelwise mapping like {label: color}, string for 
+            column in dataframe containing the color
         line_thickness (int, dict of int): line thickness for annotations if int
             or dict for anno-type wise mapping like {dtype: thickness}
         lost_geometries (LOSTGeometries): LOSTGeometries instance to use, will
@@ -62,10 +63,15 @@ def vis_sample(img, df, line_thickness=3, color=(0, 0, 255),
         anno_conf = None
         if hasattr(df, 'anno_confidence'): 
             anno_conf = list(df['anno_confidence']) 
-        anno_lbl = list(df[lbl_col])
+        if lbl_col is None:
+            anno_lbl = [None] * len(anno_data)
+        else:
+            anno_lbl = list(df[lbl_col])
         anno_dtype = list(df['anno_dtype'])
         anno_style = list(df['anno_style'])
         anno_format = list(df['anno_format'])
+        if isinstance(color, str):
+            color = list(df[color])
         thickness = get_thickness(line_thickness, img.shape[0])
         fontscale = get_fontscale(fontscale, thickness, img.shape[0])            
         thickness = max(1, thickness)
@@ -78,17 +84,18 @@ def vis_sample(img, df, line_thickness=3, color=(0, 0, 255),
 
 def vis_and_store(df, out_dir, lbl_col='anno_lbl', color=(0, 0, 255), 
                   line_thickness=2, fontscale=2, filesystem=None, 
-                  radius=2):
+                  radius=2, parallel=-1):
     '''Visualize annotations and store them to a folder
 
     Args:
         df (pd.DataFrame): Optional dataset in lost format to visualize
         out_dir (str): Directory to store the visualized annotations
-        color (tuple, dict of tuple): colors (B,G,R) for all annos if tuple 
-            or dict for labelwise mapping like {label: color}
+        color (tuple, dict of tuple, string): colors (B,G,R) for all annos 
+            if tuple, dict for labelwise mapping like {label: color}, string for 
+            column in dataframe containing the color
         line_thickness (int, dict of int): line thickness for annotations if int
             or dict for anno-type wise mapping like {dtype: thickness}
-        lbl_col (str): column containing the labels
+        lbl_col (str, None): column containing the labels, draws no lbl if None
         radius (int): radius to draw for points/circles
         filesystem (fsspec.filesystem, FileMan): filesystem to use. Use local
             if not initialized
@@ -107,13 +114,13 @@ def vis_and_store(df, out_dir, lbl_col='anno_lbl', color=(0, 0, 255),
             fs.write_img(img, out_path)
         else:
             fs.copy(img_path, out_path)
-            
-    Parallel(n_jobs=-1)(delayed(vis_img)(path, df_vis) 
-                        for path, df_vis in tqdm(df.groupby('img_path'), 
-                                                 desc='visualize'))
-
-    # for path, df_vis in tqdm(df.groupby('img_path'), desc='visualize'):
-    #     vis_img(path, df_vis) 
+    if parallel:
+        Parallel(n_jobs=parallel)(delayed(vis_img)(path, df_vis) 
+                                  for path, df_vis in tqdm(df.groupby('img_path'), 
+                                                           desc='visualize'))
+    else:
+        for path, df_vis in tqdm(df.groupby('img_path'), desc='visualize'):
+            vis_img(path, df_vis) 
     
 
 def vis_semantic_segmentation(df, out_dir, n_classes, palette='dark', 

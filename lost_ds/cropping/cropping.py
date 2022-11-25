@@ -104,7 +104,7 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
 def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0, 
                     context_alignment=None, min_size=None, 
                     anno_dtype=['polygon'], center_lbl_key='center_lbl', 
-                    filesystem:FileMan=None):
+                    filesystem:FileMan=None, parallel=-1):
     """Crop the entire dataset with fixed crop-shape
 
     Args:
@@ -138,7 +138,6 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
     fs = get_fs(filesystem)
     fs.makedirs(dst_dir, True)
     df = validate_empty_images(df)
-    # df = df[selection_mask(anno_dtype, df, 'anno_dtype')]
     if len(np.setdiff1d(anno_dtype, ['polygon', 'bbox'])):
         raise NotImplementedError(f'Component cropping does not support {anno_dtype}')
     
@@ -159,8 +158,11 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
             base_df = img_df
         else:
             base_df = label_selection(base_labels, img_df, col=lbl_col)
-        
+        if not len(base_df):
+            return None
         crop_df = base_df[selection_mask(anno_dtype, base_df, 'anno_dtype')].copy()
+        if not len(crop_df):
+            return None
         crop_df = polygon_to_bbox(crop_df, 'x1y1x2y2')
         
         img = fs.read_img(img_path)
@@ -168,9 +170,6 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
         ret_df = list()
         
         for idx, row in crop_df.iterrows():
-            # calculate context for crop
-            # polygon = row.anno_data
-            # (minx, miny), (maxx, maxy) = polygon.min(axis=0), polygon.max(axis=0)
             minx, miny, maxx, maxy = row.anno_data
             w, h = maxx - minx, maxy - miny
             x_marg, y_marg = context_x * w, context_y * h
@@ -206,23 +205,20 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
             crop_anno['img_path'] = crop_path
             crop_anno['crop_position'] = crop_anno['img_path'].apply(lambda x: [minx, miny, maxx, maxy])
             crop_anno.loc[idx, center_lbl_key] = True
-            # crop_anno[center_lbl_key] = row[lbl_col]
-            # crop_anno[center_lbl_key] = crop_anno[center_lbl_key].apply(lambda x: row[lbl_col])
-            ret_df.append(crop_anno)
-            
+            ret_df.append(crop_anno)    
         if len(ret_df):
-            # print(len(pd.concat(ret_df)))
             return pd.concat(ret_df)
         else: 
             return None
-    
-    crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, df) 
-                                    for path, df in tqdm(df.groupby('img_path'), 
-                                                     desc='crop dataset'))
-    
-    # crop_dfs = []
-    # for path, df in tqdm(df.groupby('img_path'), desc='crop dataset'):
-    #     crop_dfs.append(crop_and_recalculate(path, df))
+        
+    if parallel:
+        crop_dfs = Parallel(n_jobs=parallel)(delayed(crop_and_recalculate)(path, df) 
+                                             for path, df in tqdm(df.groupby('img_path'), 
+                                                                  desc='crop dataset'))
+    else:
+        crop_dfs = []
+        for path, df in tqdm(df.groupby('img_path'), desc='crop dataset'):
+            crop_dfs.append(crop_and_recalculate(path, df))
     
     # TODO: return empty df if noting to crop
     return pd.concat(crop_dfs)
