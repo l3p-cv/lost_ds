@@ -1,4 +1,5 @@
 import pandas as pd 
+import pyarrow as pa
 from joblib import parallel_backend, Parallel, delayed, effective_n_jobs, cpu_count
 from sklearn.utils import gen_even_slices
 from sklearn.utils.validation import _num_samples
@@ -15,22 +16,39 @@ def get_fs(filesystem, backend='pandas'):
         return FileMan(filesystem, backend)
 
 
-def prep_parquet(df):
+def prep_parquet(df, try_serialize_objects=False):
     geom = LOSTGeometries()
-    # if isinstance(df, LOSTDataset):
-    #     df = df.df
     store_df = df.copy()
     if 'anno_data' in df.keys():
         store_df.anno_data = store_df.anno_data.apply(lambda x: 
             geom.serializable(x))
-        return store_df
-    else:
-        return df
+    
+    # HACK: If data of different dimensions is provided pyarrow wont serialize without errors
+    # try which object-columns cannot be serialized with pyarrow and try to give them
+    # a 2 dimensional shape
+    if try_serialize_objects:
+        object_columns = (store_df.dtypes=='O').index[(store_df.dtypes=='O').values]
+        for k in object_columns:
+            try:
+                pa.table(store_df[[k]])
+            except pa.ArrowInvalid:
+                store_df[k] = store_df[k].apply(lambda x: geom.serializable(x))
+                try:
+                    pa.table(store_df[[k]])
+                except:
+                    raise Exception(pa.ArrowInvalid, f'Cannot serialize data of column {k}!')
+                store_df.rename({k: k + '_lds_serialized'}, axis=1, inplace=True)
+    return store_df
+
 
 def to_parquet(path, df, filesystem=None):
     fs = get_fs(filesystem)
     store_df = prep_parquet(df)
-    fs.write_dataset(store_df, path)
+    try:
+        fs.write_dataset(store_df, path)
+    except pa.ArrowInvalid:
+        store_df = prep_parquet(df, try_serialize_objects=True)
+        fs.write_dataset(store_df, path)
     
     
 def parallel_apply(df:pd.DataFrame, func, n_jobs= -1, **kwargs):
