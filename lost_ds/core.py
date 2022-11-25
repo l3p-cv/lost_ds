@@ -53,7 +53,7 @@ from lost_ds.segmentation.semantic_seg import (semantic_segmentation,
 from lost_ds.segmentation.anno_from_seg import (segmentation_to_lost,
                                                )
 
-from lost_ds.detection.detection import detection_dataset
+from lost_ds.detection.detection import detection_dataset, bbox_nms
 
 from lost_ds.masking.masking import mask_dataset
 
@@ -90,17 +90,24 @@ class LOSTDataset(object):
     #
     
     def _parse_data(self):
-        # parse anno_data (lists) to numpy array
+        # parse lds-serialized data (2D-lists) to numpy array
         def _parse(x):
             try: 
                 return np.vstack(x).squeeze()
             except:
                 return x
         
+        parse_keys = [k for k in self.df.keys() if k.endswith('_lds_serialized')]
+        if parse_keys:
+            col_mapper = dict()
+            for k in parse_keys:
+                self.df[k] = self.df[k].apply(lambda x: _parse(x))
+                col_mapper[k] = k.replace('_lds_serialized', '')
+            self.df.rename(col_mapper, axis=1, inplace=True)
+            
         if 'anno_data' in self.df:
             self.df.anno_data = self.df.anno_data.apply(lambda x: _parse(x))
-                # lambda x: np.vstack(x).squeeze())
-                    
+        
             
     def to_parquet(self, path, df=None):
         ''' Store dataset as .parquet file
@@ -204,14 +211,13 @@ class LOSTDataset(object):
     #   Data copy
     #
     
-    def copy_imgs(self, out_dir, df=None, col='img_path', copy_path=None, 
+    def copy_imgs(self, out_dir, df=None, col='img_path', 
                   force_overwrite=False):
         '''Copy all images of dataset into out_dir
 
         Args:
             df (pd.DataFrame): dataframe to copy
             out_dir (str): Destination folder to store images
-            copy_path (str, optional): directory where to copy all images
             col (str): column containing paths to files
         '''
         df = self._get_df(df)
@@ -647,8 +653,8 @@ class LOSTDataset(object):
     #
     
     def vis_and_store(self, out_dir, df=None, lbl_col='anno_lbl', 
-                      color=(0, 0, 255), line_thickness='auto', fontscale='auto', 
-                      radius=2):
+                      color=(0, 0, 255), line_thickness='auto', 
+                      fontscale='auto', radius=2, parallel=-1):
         '''Visualize annotations and store them to a folder
 
         Args:
@@ -663,7 +669,7 @@ class LOSTDataset(object):
         '''
         df = self._get_df(df)
         vis_and_store(df, out_dir, lbl_col, color, line_thickness, fontscale, 
-                      self.fileman, radius)
+                      self.fileman, radius, parallel)
     
     
     def vis_semantic_segmentation(self, out_dir, n_classes, palette='dark', 
@@ -732,7 +738,8 @@ class LOSTDataset(object):
     def crop_components(self, dst_dir, base_labels=-1, lbl_col='anno_lbl', 
                         context=0, df=None, context_alignment=None, 
                         min_size=None, anno_dtype=['polygon'], 
-                        center_lbl_key='center_lbl', inplace=False):
+                        center_lbl_key='center_lbl', inplace=False, 
+                        parallel=-1):
         """Crop the entire dataset with fixed crop-shape
 
         Args:
@@ -762,7 +769,7 @@ class LOSTDataset(object):
         df = self._get_df(df)
         df = crop_components(df, dst_dir, base_labels, lbl_col, context, 
                              context_alignment, min_size, anno_dtype, 
-                             center_lbl_key, self.fileman)
+                             center_lbl_key, self.fileman, parallel=parallel)
         return self._update_inplace(df, inplace)
         
     #
@@ -880,6 +887,27 @@ class LOSTDataset(object):
                                use_empty_images, self.fileman)
         return self._update_inplace(df, inplace)
     
+    
+    def bbox_nms(self, lbl_col='anno_lbl', method='nms', iou_thr=0.5, df=None, 
+                 inplace=False, parallel=-1, **kwargs):
+        """apply nms to dataframe to suppress overlapping bboxes
+
+        Args:
+            df (pd.DataFrame): dataframe containing bboxes to supress
+            lbl_col (str, optional): columns containing labels. Defaults to 'anno_lbl'.
+            method (str, optional): one of {'nms', 'nmw', 'soft_nms', 'wbf', 'merge'}. Defaults to 'nms'.
+            iou_thr (float, optional): iou threshold when to supress bboxes. Defaults to 0.5.
+            filesystem (fsspec, optional): filesystem. Defaults to None.
+            parallel (int): use parallelism
+
+        Returns:
+            pd.DataFrame: dataframe with overlapping bboxes pruned
+        """
+        df = self._get_df(df)
+        df = bbox_nms(df, lbl_col, method, iou_thr, self.fileman, parallel, 
+                      **kwargs)
+        return self._update_inplace(df, inplace)
+        
     
     #
     #   Masking
