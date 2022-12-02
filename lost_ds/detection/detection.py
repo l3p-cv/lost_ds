@@ -3,7 +3,6 @@ from typing import Union
 from joblib import Parallel, cpu_count, delayed 
 import pandas as pd 
 import numpy as np 
-import matplotlib.pyplot as plt 
 
 from lost_ds.functional.split import split_by_empty
 from lost_ds.functional.validation import (validate_empty_images, 
