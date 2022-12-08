@@ -11,6 +11,7 @@ import fsspec
 from joblib import Parallel, delayed, cpu_count
 from lost_ds.copy import copy_imgs
 from lost_ds.functional.validation import validate_img_paths, validate_single_labels
+from lost_ds.functional.filter import remove_empty
 
 from lost_ds.geometry.api import LOSTGeometries
 from lost_ds.geometry.bbox import Bbox
@@ -190,7 +191,7 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     df = validate_img_paths(df, remove_invalid, filesystem)
     df = transform_bbox_style('xywh', df)
     df = to_abs(df, filesystem=filesystem, verbose=False)
-    img_paths = df['img_path'].unique()
+    img_paths = sorted(df['img_path'].unique())
     
     categories = list()
     imgs = list()
@@ -247,6 +248,7 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
         img_df = df[df['img_path']==img_path]
         if not img_df['anno_data'].notnull().any():
             continue
+        img_df = remove_empty(img_df)
         for _, row in img_df.iterrows():
             anno_type = row['anno_dtype']
             anno = {"id": len(annos) + 1,

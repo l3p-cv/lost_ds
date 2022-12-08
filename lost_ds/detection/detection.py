@@ -97,8 +97,12 @@ def coco_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, out_dir=None,
     pred_json = os.path.join(out_dir, 'pred.json')
     
     # to coco
+    # img_ids = {p: uid for uid, p in enumerate(gt_df['img_path'].unique())}
     coco_gt = to_coco(gt_df, json_path=gt_json, filesystem=filesystem)
     coco_pred = to_coco(pred_df, json_path=pred_json, filesystem=filesystem)
+    assert 0, 'COCO Eval not working right now!!'
+    # TODO: image ids have to be consistent over pred_df and gt_df
+    # TODO: categories aren't consistent too!
     coco_gt = COCO(gt_json)
     coco_pred = COCO(pred_json)
     
@@ -115,7 +119,10 @@ def coco_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, out_dir=None,
             for cl in classes:
                 class_ious = dict((k, v) for k,v in coco_eval.ious.items() if k[1]==cl)
                 max_ious = [iou.max(axis=0).reshape((-1,1)) for iou in class_ious.values() if len(iou)]
-                max_ious = np.concatenate(max_ious, 0)
+                if len(max_ious):
+                    max_ious = np.concatenate(max_ious, 0)
+                else:
+                    max_ious = np.array([np.nan])
                 ious['class'].append(cl)
                 ious['ious'].append(list(max_ious.reshape((-1))))
                 ious['mean_iou'].append(max_ious.mean())
@@ -142,9 +149,19 @@ def voc_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, iou_threshold=0.5,
              APMethod='AllPointsInterpolation'):
     from podm.metrics import BoundingBox, get_pascal_voc_metrics, MethodAveragePrecision
     
-    # prepare dataset
-    gt_df = validate_single_labels(validate_empty_images(polygon_to_bbox(to_abs(gt_df, verbose=False), 'x1y1x2y2')), dst_col='anno_lbl')
-    pred_df = validate_single_labels(validate_empty_images(transform_bbox_style('x1y1x2y2', to_abs(pred_df, verbose=False))) , dst_col='anno_lbl')
+    # prepare datasets
+    # gt
+    gt_df = to_abs(gt_df, verbose=False)
+    gt_df = polygon_to_bbox(gt_df, 'x1y1x2y2')
+    gt_df = transform_bbox_style('x1y1x2y2', gt_df)
+    gt_df = validate_empty_images(gt_df)
+    gt_df = validate_single_labels(gt_df, dst_col='anno_lbl')
+    # pred
+    pred_df = to_abs(pred_df, verbose=False)
+    pred_df = polygon_to_bbox(pred_df, 'x1y1x2y2')
+    pred_df = transform_bbox_style('x1y1x2y2', pred_df)
+    pred_df = validate_empty_images(pred_df)
+    pred_df = validate_single_labels(pred_df, dst_col='anno_lbl')
     
     def _cast_df(df):
         boxes = list()
