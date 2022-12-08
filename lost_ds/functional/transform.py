@@ -174,6 +174,8 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     Args:
         df ([pd.DataFrame]): dataframe to apply transform
         remove_invalid (bool, optional): Remove invalid image-paths. Defaults to True.
+        predef_img_mapping (dict, optional): predefined uid mapping for images like {img_path: uid}
+        predef_lbl_mapping (dict, optional): predefined uid mapping for labels like {lbl: uid}
         lbl_col (str, optional): dataframe column to look for labels. Defaults to 'anno_lbl'.
         supercategory_mapping ([dict], optional): dict like mapping for supercategories ({class: superclass}). 
             Defaults to None.
@@ -195,7 +197,7 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     df = transform_bbox_style('xywh', df)
     df = to_abs(df, filesystem=filesystem, verbose=False)
     
-    if not predef_img_mapping:
+    if predef_img_mapping is None:
         img_mapping = {img: idx for idx, img in enumerate(df['img_path'].unique())}
     else:
         img_mapping = predef_img_mapping
@@ -205,7 +207,7 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     annos = list()
     
     # COCO-categories
-    if not predef_lbl_mapping:
+    if predef_lbl_mapping is None:
         u_lbls = unique_labels(df[(df['anno_data'].notnull()) & (df[lbl_col].notnull())], lbl_col)
         lbl_to_id = {lbl: lbl_id+1 for lbl_id, lbl in enumerate(u_lbls)}
     else:
