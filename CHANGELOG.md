@@ -4,10 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased] 
+## [1.0.0] 
 ### Added
-- disabled coco_eval - has to be fixed
 - fixed voc_eval bug where gt_df bboxes weren't handled correctly
+- fixed coco_eval bug - different dataframes having same uids for images and labels now
+- to_coco meethod has arguments predef_img_mapping and predef_lbl_mapping now to hand over predefined label and image uids
 
 ## [0.5.0] - 2022-12-02
 ### Added
