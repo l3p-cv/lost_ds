@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased] 
 ### Added
-- New stuff here
+- disabled coco_eval - has to be fixed
+- fixed voc_eval bug where gt_df bboxes weren't handled correctly
 
 ## [0.5.0] - 2022-12-02
 ### Added
