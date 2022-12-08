@@ -10,7 +10,7 @@ import numpy as np
 import fsspec
 from joblib import Parallel, delayed, cpu_count
 from lost_ds.copy import copy_imgs
-from lost_ds.functional.validation import validate_img_paths, validate_single_labels
+from lost_ds.functional.validation import validate_img_paths, validate_single_labels, validate_unique_annos
 from lost_ds.functional.filter import remove_empty
 
 from lost_ds.geometry.api import LOSTGeometries
@@ -164,6 +164,8 @@ def polygon_to_bbox(df, dst_style=None):
 # TODO: implement segmentation to RLE for iscrowd==1 and results format
 # TODO: enable panoptic segmentation
 def to_coco(df, remove_invalid=True, lbl_col='anno_lbl', 
+            predef_img_mapping:dict=None,
+            predef_lbl_mapping:dict=None,
             supercategory_mapping=None, copy_path=None, rename_by_index=False,
             json_path=None,
             filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None):
@@ -186,26 +188,33 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     """
     filesystem = get_fs(filesystem)
     df = validate_single_labels(df, lbl_col, 'coco_lbl')
+    df = validate_unique_annos(df)
     lbl_col = 'coco_lbl'
     assert not is_multilabel(df, lbl_col), 'Provided lbl-col {} contains multilabels'
     df = validate_img_paths(df, remove_invalid, filesystem)
     df = transform_bbox_style('xywh', df)
     df = to_abs(df, filesystem=filesystem, verbose=False)
-    img_paths = sorted(df['img_path'].unique())
     
+    if not predef_img_mapping:
+        img_mapping = {img: idx for idx, img in enumerate(df['img_path'].unique())}
+    else:
+        img_mapping = predef_img_mapping
+        
     categories = list()
     imgs = list()
     annos = list()
     
     # COCO-categories
-    u_lbls = unique_labels(df[(df['anno_data'].notnull()) & (df[lbl_col].notnull())], lbl_col)
-    lbl_to_id = dict()
-    for lbl_id, lbl in enumerate(u_lbls):
+    if not predef_lbl_mapping:
+        u_lbls = unique_labels(df[(df['anno_data'].notnull()) & (df[lbl_col].notnull())], lbl_col)
+        lbl_to_id = {lbl: lbl_id+1 for lbl_id, lbl in enumerate(u_lbls)}
+    else:
+        lbl_to_id = predef_lbl_mapping
+    for lbl, lbl_id in lbl_to_id.items():
         supercategory = None if supercategory_mapping is None else supercategory_mapping[lbl]
-        categories.append({"id": lbl_id + 1, 
+        categories.append({"id": lbl_id, 
                            "name": lbl,
                            "supercategory": supercategory})
-        lbl_to_id[lbl] = lbl_id + 1
     
     copy_process = list()
     if copy_path is None:
@@ -215,10 +224,8 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     else:
         filesystem.makedirs(copy_path, True)
         
-    for img_path in img_paths:
-        
-        img_id = len(imgs) + 1
-        
+    for img_path, img_id in img_mapping.items():
+                
         # COCO-imgs
         im_h, im_w = get_imagesize(img_path)
         filename = img_path.split('/')[-1]

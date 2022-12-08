@@ -96,12 +96,23 @@ def coco_eval(gt_df:pd.DataFrame, pred_df:pd.DataFrame, out_dir=None,
     pred_json = os.path.join(out_dir, 'pred.json')
     
     # to coco
-    # img_ids = {p: uid for uid, p in enumerate(gt_df['img_path'].unique())}
-    coco_gt = to_coco(gt_df, json_path=gt_json, filesystem=filesystem)
-    coco_pred = to_coco(pred_df, json_path=pred_json, filesystem=filesystem)
-    assert 0, 'COCO Eval not working right now!!'
-    # TODO: image ids have to be consistent over pred_df and gt_df
-    # TODO: categories aren't consistent too!
+    # predefine img ids
+    u_imgs = np.unique(list(gt_df['img_path']) + list(pred_df['img_path']))
+    img_mapping = {p: uid for uid, p in enumerate(u_imgs)}
+    # predefine lbl ids
+    gt_df = validate_single_labels(gt_df, dst_col='coco_lbl')
+    pred_df = validate_single_labels(pred_df, dst_col='coco_lbl')
+    u_lbls = np.unique(list(gt_df['coco_lbl']) + list(pred_df['coco_lbl']))
+    u_lbls = [c for c in u_lbls if pd.notna(c)]
+    lbl_mapping = {p: uid+1 for uid, p in enumerate(u_lbls)}
+    # dataframe to coco
+    coco_gt = to_coco(gt_df, predef_img_mapping=img_mapping, 
+                      predef_lbl_mapping=lbl_mapping, json_path=gt_json, 
+                      filesystem=filesystem)
+    coco_pred = to_coco(pred_df, predef_img_mapping=img_mapping, 
+                        predef_lbl_mapping=lbl_mapping, 
+                        json_path=pred_json, filesystem=filesystem)
+    
     coco_gt = COCO(gt_json)
     coco_pred = COCO(pred_json)
     
