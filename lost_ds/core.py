@@ -1,6 +1,5 @@
-from os import name
-from random import random
 import numpy as np
+import pandas as pd 
 
 from lost_ds.io.file_man import FileMan
 from lost_ds.geometry.api import LOSTGeometries
@@ -131,7 +130,9 @@ class LOSTDataset(object):
         '''
         if df is None:
             return self.df.copy()
-        else: 
+        elif isinstance(df, LOSTDataset):
+            return df.df
+        elif isinstance(df, pd.DataFrame):
             return df
     
     
@@ -733,6 +734,30 @@ class LOSTDataset(object):
         """
         df = self._get_df(df)
         return self.cropper.crop_anno(img_path, df, crop_position, im_w, im_h)
+    
+    
+    def crop_img(self, img, crop_shape=(512, 512), overlap=(0, 0), fill_value=0, 
+                 df=None):
+        '''Crop a 3D image and get a 4D array with crops
+        
+        Args:
+            img (np.array): (H, W, C) Image to crop
+            crop_shape (tuple): (H, W) shape of crops
+            overlap (tuple): (H, W) overlap between crops
+            fill_value (float): pixel-value to fill the area where crops are 
+                out of the image
+            df (pd.DataFrame): dataframe to apply 
+        
+        Returns:
+            (np.ndarray, np.ndarray, tuple): 
+                1. batch of cropped images as 4D-array with shape 
+                    [N, crop_shape[0], crop_shape[1], channels] 
+                2. positions of shape [N, 4] in format [xmin, ymin, xmax, ymax]
+                3. image padding ((top_pad, bot_pad), (left_pad, right_pad))
+        '''
+        df = self._get_df(df)
+        return self.cropper.crop_img(img, crop_shape=crop_shape, 
+                                     overlap=overlap, fill_value=fill_value)
     
     
     def crop_components(self, dst_dir, base_labels=-1, lbl_col='anno_lbl', 
