@@ -26,6 +26,7 @@ from lost_ds.functional.api import(remove_empty,
 
 from lost_ds.cropping.api import (DSCropper,
                                   crop_anno,
+                                  crop_img,
                                   crop_dataset,
                                   crop_components)
 
