@@ -114,13 +114,20 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
     
     ret_df = pd.concat(crop_dfs)
     
-    # set anno-information from formerly non empty annos to emptyS
+    
+    # set anno-information from formerly non empty annos to empty
     anno_keys = [k for k in ret_df.keys() if 'anno' in k]
     ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = None
     # make anno_lbl* format compatible
     anno_keys = [k for k in ret_df.keys() if 'anno_lbl' in k]
-    s = pd.Series(np.array([], 'object'))
-    ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = ret_df[ret_df['anno_data'].isnull()]['anno_data'].apply(lambda x: s)
+    
+    ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = \
+    ret_df[ret_df['anno_data'].isnull()]['anno_data'].apply(lambda x: 
+        np.array([], 'object'))
+    
+    # s = pd.Series(np.array([], 'object'))
+    # ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = ret_df[ret_df['anno_data'].isnull()]['anno_data'].apply(lambda x: s)
+    
     return ret_df
 
 
