@@ -129,12 +129,12 @@ def transform_bbox_style(dst_style, df):
         else:
             data = row.anno_data
             style = row.anno_style
-            
         new_data.append(data)
         new_style.append(style)
+        
     df_bbox.anno_data = new_data
     df_bbox.anno_style = new_style
-    df[df.anno_dtype == 'bbox'] = df_bbox
+    df.loc[df.anno_dtype=='bbox', ['anno_data', 'anno_style']] = df_bbox[['anno_data', 'anno_style']]
     return df
 
 
