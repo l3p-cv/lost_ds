@@ -39,10 +39,10 @@ def to_abs(df, path_col='img_path',
     df_rel = df[df['anno_format'] == 'rel']
     cols = [path_col, 'anno_data', 'anno_dtype', 'anno_format']
     def make_abs(row):
-        geom = LOSTGeometries()
         anno_data = row.anno_data
         anno_format = row.anno_format
-        if isinstance(anno_data, np.ndarray) and anno_format=='rel':
+        if isinstance(anno_data, np.ndarray) and anno_format=='rel' and pd.notna(anno_data):
+            geom = LOSTGeometries()
             img_path = row[path_col]
             anno_dtype = row.anno_dtype
             img_shape = get_imagesize(img_path, filesystem)
@@ -81,10 +81,10 @@ def to_rel(df, path_col='img_path',
     df_abs = df[df['anno_format'] == 'abs']
     cols = [path_col, 'anno_data', 'anno_dtype', 'anno_format']
     def make_rel(row):
-        geom = LOSTGeometries()
         anno_data = row.anno_data
         anno_format = row.anno_format
-        if isinstance(anno_data, np.ndarray) and anno_format == 'abs':
+        if isinstance(anno_data, np.ndarray) and anno_format == 'abs' and pd.notna(anno_data):
+            geom = LOSTGeometries()
             img_path = row[path_col]
             anno_dtype = row.anno_dtype
             img_shape = get_imagesize(img_path, filesystem)
