@@ -119,8 +119,6 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
     ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = None
     # make anno_lbl* format compatible
     anno_keys = [k for k in ret_df.keys() if 'anno_lbl' in k]
-    # s = pd.Series(np.array([], 'object'), dtype=object)
-    # ret_df.loc[ret_df['anno_data'].isnull(), anno_keys] = ret_df[ret_df['anno_data'].isnull()]['anno_data'].apply(lambda x: s)
     for k in anno_keys:
         ret_df.loc[ret_df['anno_data'].isnull(), k] = ret_df[ret_df['anno_data'].isnull()][k].apply(lambda x: np.array([], 'object'))
 
