@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed coco_eval bug - different dataframes having same uids for images and labels now
 - to_coco meethod has arguments predef_img_mapping and predef_lbl_mapping now to hand over predefined label and image uids
 - export method crop_img to lost_ds (lost_ds.crop_img and ds.crop_img formerly lost_ds.DSCropper.crop_img)
+- resolve FutureWarning at transform_bbox_style
+- make crop_dataset compatible with pandas > 1.5.0 
 
 ## [0.5.0] - 2022-12-02
 ### Added
