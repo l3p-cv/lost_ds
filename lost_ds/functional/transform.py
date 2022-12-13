@@ -36,7 +36,7 @@ def to_abs(df, path_col='img_path',
         pd.DataFrame: transformed dataframe wil absolute annotations
     '''
     df = df.copy()
-    df_rel = df[df['anno_format'] != 'abs']
+    df_rel = df[df['anno_format'] == 'rel']
     cols = [path_col, 'anno_data', 'anno_dtype', 'anno_format']
     def make_abs(row):
         geom = LOSTGeometries()
@@ -56,10 +56,10 @@ def to_abs(df, path_col='img_path',
                                                  total=len(df_rel),
                                                  desc='to abs', 
                                                  disable=(not verbose)))
-    df.loc[df.anno_format != 'abs', 'anno_data'] = pd.Series(abs_data, 
-                                                             index=df_rel.index,
-                                                             dtype=object)
-    df['anno_format'] = 'abs'
+    df.loc[df['anno_format'] == 'rel', 'anno_data'] = pd.Series(abs_data, 
+                                                                index=df_rel.index,
+                                                                dtype=object)
+    df.loc[df['anno_format'] == 'rel', 'anno_format'] = 'abs'
     return df
 
 
@@ -78,7 +78,7 @@ def to_rel(df, path_col='img_path',
         pd.DataFrame: transformed dataframe wil absolute annotations
     '''
     df = df.copy()
-    df_abs = df[df['anno_format'] != 'rel']
+    df_abs = df[df['anno_format'] == 'abs']
     cols = [path_col, 'anno_data', 'anno_dtype', 'anno_format']
     def make_rel(row):
         geom = LOSTGeometries()
@@ -98,10 +98,10 @@ def to_rel(df, path_col='img_path',
                                                  total=len(df_abs),
                                                  desc='to rel',
                                                  disable=(not verbose)))
-    df.loc[df.anno_format != 'rel', 'anno_data'] = pd.Series(rel_data, 
-                                                             index=df_abs.index,
-                                                             dtype=object)
-    df['anno_format'] = 'rel'
+    df.loc[df['anno_format'] == 'abs', 'anno_data'] = pd.Series(rel_data, 
+                                                                index=df_abs.index,
+                                                                dtype=object)
+    df.loc[df['anno_format'] == 'abs', 'anno_format'] = 'rel'
     return df
 
 
