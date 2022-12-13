@@ -105,7 +105,7 @@ class LOSTDataset(object):
             self.df.rename(col_mapper, axis=1, inplace=True)
             
         if 'anno_data' in self.df:
-            self.df.anno_data = self.df.anno_data.apply(lambda x: _parse(x))
+            self.df['anno_data'] = self.df['anno_data'].apply(lambda x: _parse(x))
         
             
     def to_parquet(self, path, df=None):

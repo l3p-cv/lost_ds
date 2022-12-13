@@ -118,7 +118,7 @@ def transform_bbox_style(dst_style, df):
     df = df.copy()
     geom = LOSTGeometries()
     cols = ['anno_data', 'anno_style']
-    df_bbox = df[df.anno_dtype == 'bbox', cols]
+    df_bbox = df.loc[df.anno_dtype == 'bbox', cols]
     new_data = []
     new_style = []
     for idx, row in df_bbox.iterrows():
