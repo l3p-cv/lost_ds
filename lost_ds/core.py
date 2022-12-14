@@ -213,7 +213,7 @@ class LOSTDataset(object):
     #
     
     def copy_imgs(self, out_dir, df=None, col='img_path', 
-                  force_overwrite=False):
+                  force_overwrite=False, parallel=-1):
         '''Copy all images of dataset into out_dir
 
         Args:
@@ -223,7 +223,8 @@ class LOSTDataset(object):
         '''
         df = self._get_df(df)
         copy_imgs(df=df, out_dir=out_dir, col=col, 
-                  force_overwrite=force_overwrite, filesystem=self.fileman)
+                  force_overwrite=force_overwrite, filesystem=self.fileman, 
+                  parallel=parallel)
             
     
     def pack_ds(self, out_dir, df=None, cols=['img_path', 'mask_path'], 
@@ -398,7 +399,8 @@ class LOSTDataset(object):
     #   Transformation
     #
     
-    def to_abs(self, df=None, path_col='img_path', verbose=True, inplace=False):
+    def to_abs(self, df=None, path_col='img_path', verbose=True, inplace=False,
+               parallel=-1):
         ''' Transform dataframe to absolute data
         
         Args:
@@ -407,11 +409,12 @@ class LOSTDataset(object):
             inplace (bool): overwrite self.df
         '''
         df = self._get_df(df)
-        df = to_abs(df, path_col, self.fileman, verbose)
+        df = to_abs(df, path_col, self.fileman, verbose, parallel=parallel)
         return self._update_inplace(df, inplace)
     
     
-    def to_rel(self, df=None, path_col='img_path', verbose=True, inplace=False):
+    def to_rel(self, df=None, path_col='img_path', verbose=True, inplace=False,
+               parallel=-1):
         ''' Transform dataframe to relative data
         
         Args:
@@ -420,7 +423,7 @@ class LOSTDataset(object):
             inplace (bool): overwrite self.df
         '''
         df = self._get_df(df)
-        df = to_rel(df, path_col, self.fileman, verbose)
+        df = to_rel(df, path_col, self.fileman, verbose, parallel=parallel)
         return self._update_inplace(df, inplace)
     
     
@@ -674,7 +677,7 @@ class LOSTDataset(object):
     
     
     def vis_semantic_segmentation(self, out_dir, n_classes, palette='dark', 
-                                  seg_path_col='seg_path', df=None):
+                                  seg_path_col='seg_path', df=None, parallel=-1):
         """Visualize the stored semantic segmentations by coloring it
     
         Args:
@@ -688,7 +691,7 @@ class LOSTDataset(object):
         """
         df = self._get_df(df)
         vis_semantic_segmentation(df, out_dir, n_classes, palette, seg_path_col, 
-                                  self.fileman)
+                                  self.fileman, parallel=parallel)
 
 
     #
@@ -696,7 +699,8 @@ class LOSTDataset(object):
     #
     
     def crop_dataset(self, dst_dir, crop_shape=(500, 500), overlap=(0, 0), 
-                     df=None, write_empty=False, fill_value=0, inplace=False):
+                     df=None, write_empty=False, fill_value=0, inplace=False, 
+                     parallel=-1):
         """Crop the entire dataset with fixed crop-shape
 
         Args:
@@ -714,7 +718,8 @@ class LOSTDataset(object):
         df = self._get_df(df)
         df = crop_dataset(df=df, dst_dir=dst_dir, crop_shape=crop_shape, 
                           overlap=overlap, write_empty=write_empty, 
-                          fill_value=fill_value, filesystem=self.fileman)
+                          fill_value=fill_value, filesystem=self.fileman, 
+                          parallel=parallel)
         return self._update_inplace(df, inplace)
     
     
@@ -805,7 +810,7 @@ class LOSTDataset(object):
                               anno_dtypes=['polygon'], use_empty=False, 
                               lbl_col='anno_lbl', dst_path_col='seg_path', 
                               dst_lbl_col='seg_lbl', line_thickness=None, 
-                              radius=None, inplace=False):
+                              radius=None, inplace=False, parallel=-1):
         '''Create semantic segmentations from polygon-annos
     
         Args:
@@ -841,13 +846,13 @@ class LOSTDataset(object):
         df = semantic_segmentation(order, dst_dir, fill_value, df, anno_dtypes,
                                    use_empty, lbl_col, dst_path_col, 
                                    dst_lbl_col, line_thickness, radius, 
-                                   self.fileman)
+                                   self.fileman, parallel=parallel)
         return self._update_inplace(df, inplace)
     
     
     def segmentation_to_lost(self, pixel_mapping, background=0, 
                              seg_key='seg_path', df=None, cast_others=False, 
-                             inplace=False):
+                             inplace=False, parallel=-1):
         '''Create LOST-Annotations from semantic segmentations / pixelmaps 
         
         Args:
@@ -870,7 +875,8 @@ class LOSTDataset(object):
         df = segmentation_to_lost(df, pixel_mapping=pixel_mapping, 
                                       background=background, seg_key=seg_key, 
                                       cast_others=cast_others,
-                                      filesystem=self.fileman)
+                                      filesystem=self.fileman, 
+                                      parallel=parallel)
         return self._update_inplace(df, inplace)
     
     

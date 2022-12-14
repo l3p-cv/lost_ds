@@ -124,7 +124,8 @@ def vis_and_store(df, out_dir, lbl_col='anno_lbl', color=(0, 0, 255),
     
 
 def vis_semantic_segmentation(df, out_dir, n_classes, palette='dark', 
-                              seg_path_col='seg_path', filesystem=None):
+                              seg_path_col='seg_path', filesystem=None, 
+                              parallel=-1):
     """Visualize the stored semantic segmentations by coloring it
     
     Args:
@@ -144,15 +145,18 @@ def vis_semantic_segmentation(df, out_dir, n_classes, palette='dark',
     palette = sns.color_palette(palette, n_classes)
     palette = [(np.array(x)*255).astype(np.uint8) for x in palette]
 
-    segmentations = df[seg_path_col].unique()
-
     def vis_seg(seg_path):
         seg = fs.read_img(seg_path)
         vis = np.zeros(seg.shape[:2] + (3,))
         for i in range(n_classes):
             vis = np.where(seg==i, palette[i], vis)
         fs.write_img(vis, os.path.join(out_dir, seg_path.split('/')[-1]))
-        
-    Parallel(n_jobs=-1)(delayed(vis_seg)(seg_path) 
-            for seg_path in tqdm(segmentations, desc='vis sem. seg.'))
     
+    seg_paths = df[seg_path_col].unique()
+    
+    if parallel:
+        Parallel(n_jobs=parallel)(delayed(vis_seg)(seg_path) 
+                for seg_path in tqdm(seg_paths, desc='vis sem. seg.'))
+    else:
+        for seg_path in tqdm(seg_paths, desc='vis sem. seg.'):
+            vis_seg(seg_path)

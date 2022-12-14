@@ -23,7 +23,7 @@ from lost_ds.util import get_fs
         
 def to_abs(df, path_col='img_path', 
            filesystem:Union[FileMan,fsspec.AbstractFileSystem]=None, 
-           verbose=True):
+           verbose=True, parallel=-1):
     ''' Transform all annos to absolute annos
     
     Args:
@@ -50,22 +50,30 @@ def to_abs(df, path_col='img_path',
                 anno_data, anno_dtype, anno_format, img_shape
                 )
         return anno_data
-        
-    abs_data = Parallel(-1)(delayed(make_abs)(row)
-                            for idx, row in tqdm(df_rel[cols].iterrows(), 
-                                                 total=len(df_rel),
-                                                 desc='to abs', 
-                                                 disable=(not verbose)))
+    
+    if parallel:
+        abs_data = Parallel(parallel)(delayed(make_abs)(row)
+                                for idx, row in tqdm(df_rel[cols].iterrows(), 
+                                                    total=len(df_rel),
+                                                    desc='to abs', 
+                                                    disable=(not verbose)))
+    else:
+        abs_data = list()
+        for idx, row in tqdm(df_rel[cols].iterrows(), total=len(df_rel),
+                             desc='to abs', disable=(not verbose)):
+            abs_data.append(make_abs(row))
+            
     df.loc[df['anno_format'] == 'rel', 'anno_data'] = pd.Series(abs_data, 
                                                                 index=df_rel.index,
                                                                 dtype=object)
     df.loc[df['anno_format'] == 'rel', 'anno_format'] = 'abs'
+    
     return df
 
 
 def to_rel(df, path_col='img_path', 
            filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None,
-           verbose=True):
+           verbose=True, parallel=-1):
     ''' Transform all annos to absolute annos
     
     Args:
@@ -92,16 +100,24 @@ def to_rel(df, path_col='img_path',
                 anno_data, anno_dtype, anno_format, img_shape
             )
         return anno_data
-        
-    rel_data = Parallel(-1)(delayed(make_rel)(row) 
-                            for idx, row in tqdm(df_abs[cols].iterrows(), 
-                                                 total=len(df_abs),
-                                                 desc='to rel',
-                                                 disable=(not verbose)))
+    
+    if parallel:
+        rel_data = Parallel(parallel)(delayed(make_rel)(row) 
+                                for idx, row in tqdm(df_abs[cols].iterrows(), 
+                                                    total=len(df_abs),
+                                                    desc='to rel',
+                                                    disable=(not verbose)))
+    else:
+        rel_data = list()
+        for idx, row in tqdm(df_abs[cols].iterrows(), total=len(df_abs),
+                             desc='to rel',disable=(not verbose)):
+            rel_data.append(make_rel(row))
+            
     df.loc[df['anno_format'] == 'abs', 'anno_data'] = pd.Series(rel_data, 
                                                                 index=df_abs.index,
                                                                 dtype=object)
     df.loc[df['anno_format'] == 'abs', 'anno_format'] = 'rel'
+    
     return df
 
 

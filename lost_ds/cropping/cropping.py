@@ -57,7 +57,8 @@ def crop_img(img, crop_shape=(512, 512), overlap=(0, 0),
     
     
 def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
-                 write_empty=False, fill_value=0, filesystem:FileMan=None):
+                 write_empty=False, fill_value=0, filesystem:FileMan=None,
+                 parallel=-1):
     """Crop the entire dataset with fixed crop-shape
 
     Args:
@@ -105,12 +106,14 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
         else:
             return None
     
-    crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, img_df) 
-                                    for path, img_df in tqdm(df.groupby('img_path'), 
-                                                     desc='crop dataset'))
-    # crop_dfs = []
-    # for path, img_df in tqdm(df.groupby('img_path'), desc='crop dataset'):
-    #     crop_dfs.append(crop_and_recalculate(path, img_df))
+    if parallel:
+        crop_dfs = Parallel(n_jobs=parallel)(delayed(crop_and_recalculate)(path, img_df) 
+                                        for path, img_df in tqdm(df.groupby('img_path'), 
+                                                        desc='crop dataset'))
+    else:
+        crop_dfs = []
+        for path, img_df in tqdm(df.groupby('img_path'), desc='crop dataset'):
+            crop_dfs.append(crop_and_recalculate(path, img_df))
     
     ret_df = pd.concat(crop_dfs)
     
