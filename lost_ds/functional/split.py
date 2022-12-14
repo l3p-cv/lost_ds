@@ -39,7 +39,6 @@ def split_train_test(test_size=0.2, val_size=0.2, stratify_col=None, df=None,
                                                           random_state=random_state,
                                                           stratify=stratify)
             split_data = label_selection(list(set_2), df=df, col='split_col')
-            split_data.drop('split_col', axis=1, inplace=True)
             splits.append(split_data)
             samples = set_1
             ids = ids_1
