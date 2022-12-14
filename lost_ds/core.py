@@ -90,22 +90,22 @@ class LOSTDataset(object):
     
     def _parse_data(self):
         # parse lds-serialized data (2D-lists) to numpy array
-        def _parse(x):
+        def _parse(data):
             try: 
-                return np.vstack(x).squeeze()
+                return np.vstack(data).squeeze()
             except:
-                return x
+                return data
         
         parse_keys = [k for k in self.df.keys() if k.endswith('_lds_serialized')]
         if parse_keys:
             col_mapper = dict()
             for k in parse_keys:
-                self.df[k] = self.df[k].apply(lambda x: _parse(x))
+                self.df[k] = self.df[k].apply(_parse)
                 col_mapper[k] = k.replace('_lds_serialized', '')
             self.df.rename(col_mapper, axis=1, inplace=True)
             
         if 'anno_data' in self.df:
-            self.df['anno_data'] = self.df['anno_data'].apply(lambda x: _parse(x))
+            self.df['anno_data'] = self.df['anno_data'].apply(_parse)
         
             
     def to_parquet(self, path, df=None):

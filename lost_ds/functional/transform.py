@@ -49,8 +49,11 @@ def to_abs(df, path_col='img_path',
             anno_data = geom.to_abs(
                 anno_data, anno_dtype, anno_format, img_shape
                 )
-        return anno_data
+            anno_format = 'abs'
+        else: 
+            return anno_data
     
+    ### joblib workflow
     if parallel:
         abs_data = Parallel(parallel)(delayed(make_abs)(row)
                                 for idx, row in tqdm(df_rel[cols].iterrows(), 
@@ -60,15 +63,21 @@ def to_abs(df, path_col='img_path',
     else:
         abs_data = list()
         for idx, row in tqdm(df_rel[cols].iterrows(), total=len(df_rel),
-                             desc='to abs', disable=(not verbose)):
+                            desc='to abs', disable=(not verbose)):
             abs_data.append(make_abs(row))
             
     df.loc[df['anno_format'] == 'rel', 'anno_data'] = pd.Series(abs_data, 
                                                                 index=df_rel.index,
                                                                 dtype=object)
     df.loc[df['anno_format'] == 'rel', 'anno_format'] = 'abs'
+    ###
+
+    ### apply workflow
+    # df.loc[df['anno_format'] == 'rel', ['anno_data', 'anno_format']] = df.loc[df['anno_format'] == 'rel', cols].apply(lambda x: make_abs(x, True), axis=1, result_type='expand')
+    ###
     
     return df
+
 
 
 def to_rel(df, path_col='img_path', 
@@ -172,6 +181,8 @@ def polygon_to_bbox(df, dst_style=None):
     polygons = df[df.anno_dtype == 'polygon']
     df.loc[df.anno_dtype=='polygon', 'anno_data'] = polygons.anno_data.apply(
         lambda x: geom.poly_to_bbox(x, dst_style))
+    # df.loc[df.anno_dtype=='polygon', 'anno_data'] = polygons.anno_data.apply(
+    #     geom.poly_to_bbox, dst_style)
     columns = ['anno_style', 'anno_dtype']
     df.loc[df.anno_dtype=='polygon', columns] = [dst_style, 'bbox']
     return df
