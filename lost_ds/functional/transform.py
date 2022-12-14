@@ -48,10 +48,8 @@ def to_abs(df, path_col='img_path',
             img_shape = get_imagesize(img_path, filesystem)
             anno_data = geom.to_abs(
                 anno_data, anno_dtype, anno_format, img_shape
-                )
-            anno_format = 'abs'
-        else: 
-            return anno_data
+                )    
+        return anno_data
     
     ### joblib workflow
     if parallel:
