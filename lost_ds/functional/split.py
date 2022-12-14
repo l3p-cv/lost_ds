@@ -106,4 +106,7 @@ def split_multilabels(lbl_mapping, df:pd.DataFrame=None, col='anno_lbl'):
     df[categories] = pd.DataFrame(list(df[col].apply(
         lambda x: split_labels(x))), columns=categories, index=df.index)
     
+    # TODO: continue implementation
+    # df[categories] = df[col].apply(split_labels, axis=1, result_type='expand')
+    
     return df
