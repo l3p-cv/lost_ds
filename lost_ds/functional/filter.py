@@ -63,7 +63,7 @@ def selection_mask(labels, df, col='anno_lbl'):
         #     bool(sum([l in list(x) for l in labels])))
         return df[col].apply(lambda x: np.intersect1d(x, labels).any())
     else:
-        return df[df[col].isin(labels)]
+        return df[col].isin(labels)
 
 
 def label_selection(labels, df, col='anno_lbl'):
