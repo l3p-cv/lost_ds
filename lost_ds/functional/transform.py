@@ -41,7 +41,7 @@ def to_abs(df, path_col='img_path',
     def make_abs(row):
         anno_data = row.anno_data
         anno_format = row.anno_format
-        if isinstance(anno_data, np.ndarray) and anno_format=='rel' and pd.notna(anno_data):
+        if isinstance(anno_data, np.ndarray) and anno_format=='rel':
             geom = LOSTGeometries()
             img_path = row[path_col]
             anno_dtype = row.anno_dtype
@@ -83,7 +83,7 @@ def to_rel(df, path_col='img_path',
     def make_rel(row):
         anno_data = row.anno_data
         anno_format = row.anno_format
-        if isinstance(anno_data, np.ndarray) and anno_format == 'abs' and pd.notna(anno_data):
+        if isinstance(anno_data, np.ndarray) and anno_format == 'abs':
             geom = LOSTGeometries()
             img_path = row[path_col]
             anno_dtype = row.anno_dtype
