@@ -1,5 +1,6 @@
-import numpy as np
 
+import numpy as np
+import pandas as pd 
 
 def is_multilabel(df, col):
     '''check if a column contains multilabels
@@ -58,9 +59,11 @@ def selection_mask(labels, df, col='anno_lbl'):
     if not isinstance(labels, (list, np.ndarray)):
         labels = [labels]
     if is_multilabel(df, col):
-        return df[col].apply(lambda x: 
-            bool(sum([l in list(x) for l in labels])))
-    return df[col].apply(lambda x: x in labels)
+        # return df[col].apply(lambda x: 
+        #     bool(sum([l in list(x) for l in labels])))
+        return df[col].apply(lambda x: np.intersect1d(x, labels).any())
+    else:
+        return df[df[col].isin(labels)]
 
 
 def label_selection(labels, df, col='anno_lbl'):
