@@ -61,7 +61,7 @@ def selection_mask(labels, df, col='anno_lbl'):
     if is_multilabel(df, col):
         # return df[col].apply(lambda x: 
         #     bool(sum([l in list(x) for l in labels])))
-        return df[col].apply(lambda x: np.intersect1d(x, labels).any())
+        return df[col].apply(lambda x: bool(len(np.intersect1d(x, labels))))
     else:
         return df[col].isin(labels)
 
