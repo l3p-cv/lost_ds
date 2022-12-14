@@ -109,8 +109,8 @@ def validate_single_labels(df, lbl_col='anno_lbl', dst_col='my_lbl'):
     '''
     df = df.copy()
     if is_multilabel(df, lbl_col):
-        df[lbl_col] = df[lbl_col].apply(lambda x: np.unique(x))
-        n_lbl = df[lbl_col].apply(lambda x: len(x))
+        df[lbl_col] = df[lbl_col].apply(np.unique)
+        n_lbl = df[lbl_col].apply(len)
         if n_lbl.max() > 1:
             raise Exception('Found multilabels in {}. \n{}'.
                             format(lbl_col, df[n_lbl > 1][lbl_col]))
