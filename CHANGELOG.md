@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - export method crop_img to lost_ds (lost_ds.crop_img and ds.crop_img formerly lost_ds.DSCropper.crop_img)
 - resolve FutureWarning at transform_bbox_style
 - make crop_dataset compatible with pandas > 1.5.0 
+- crop_component indexing is imagewise instead of global
+- Add parallel option for multiple functions
+- improve some filter and transform functions
+
 
 ## [0.5.0] - 2022-12-02
 ### Added
