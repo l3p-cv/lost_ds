@@ -196,6 +196,7 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
         im_h, im_w = img.shape[:2]
         ret_df = list()
         
+        crop_id = 0
         for idx, row in crop_df.iterrows():
             minx, miny, maxx, maxy = row.anno_data
             w, h = maxx - minx, maxy - miny
@@ -226,7 +227,8 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
 
             # apply crop
             crop = img[miny: maxy, minx: maxx]
-            crop_name = f'{img_path.split("/")[-1].split(".")[0]}_crop_{idx}.{img_path.split(".")[-1]}'
+            crop_name = f'{img_path.split("/")[-1].split(".")[0]}_crop_{crop_id}.{img_path.split(".")[-1]}'
+            crop_id += 1
             crop_path = os.path.join(dst_dir, crop_name)
             fs.write_img(crop, crop_path)
             crop_anno['img_path'] = crop_path
