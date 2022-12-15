@@ -64,7 +64,8 @@ def _segmentation_to_polygon(segmentation, pixel_mapping: dict, background,
 
 
 def segmentation_to_lost(df: pd.DataFrame, pixel_mapping, background=0, 
-                         seg_key='seg_path', cast_others=False, filesystem=None):
+                         seg_key='seg_path', cast_others=False, filesystem=None,
+                         parallel=-1):
     
     '''Create LOST-Annotations from semantic segmentations / pixelmaps 
     
@@ -112,14 +113,15 @@ def segmentation_to_lost(df: pd.DataFrame, pixel_mapping, background=0,
         return pd.DataFrame(lost_anno_data)
     
     n_segs = len(df[seg_key].unique())
-    ret = Parallel(n_jobs=-1)(delayed(seg_to_poly)(seg_path, seg_df) 
-                              for seg_path, seg_df in tqdm(df.groupby([seg_key]), 
-                                                           total=n_segs, 
-                                                           desc='seg. to anno'))
-    
-    # ret = list()
-    # for seg_path, seg_df in tqdm(df.groupby([seg_key])):
-    #     ret.append(seg_to_poly(seg_path, seg_df))
+    if parallel:
+        ret = Parallel(n_jobs=parallel)(delayed(seg_to_poly)(seg_path, seg_df) 
+                                for seg_path, seg_df in tqdm(df.groupby([seg_key]), 
+                                                            total=n_segs, 
+                                                            desc='seg. to anno'))
+    else:
+        ret = list()
+        for seg_path, seg_df in tqdm(df.groupby([seg_key])):
+            ret.append(seg_to_poly(seg_path, seg_df))
         
     df = pd.concat(ret)
     df.reset_index(inplace=True, drop=True)

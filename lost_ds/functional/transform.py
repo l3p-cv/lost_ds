@@ -23,7 +23,7 @@ from lost_ds.util import get_fs
         
 def to_abs(df, path_col='img_path', 
            filesystem:Union[FileMan,fsspec.AbstractFileSystem]=None, 
-           verbose=True):
+           verbose=True, parallel=-1):
     ''' Transform all annos to absolute annos
     
     Args:
@@ -36,36 +36,51 @@ def to_abs(df, path_col='img_path',
         pd.DataFrame: transformed dataframe wil absolute annotations
     '''
     df = df.copy()
-    df_rel = df[df['anno_format'] != 'abs']
+    df_rel = df[df['anno_format'] == 'rel']
     cols = [path_col, 'anno_data', 'anno_dtype', 'anno_format']
     def make_abs(row):
-        geom = LOSTGeometries()
         anno_data = row.anno_data
         anno_format = row.anno_format
         if isinstance(anno_data, np.ndarray) and anno_format=='rel':
+            geom = LOSTGeometries()
             img_path = row[path_col]
             anno_dtype = row.anno_dtype
             img_shape = get_imagesize(img_path, filesystem)
             anno_data = geom.to_abs(
                 anno_data, anno_dtype, anno_format, img_shape
-                )
+                )    
         return anno_data
-        
-    abs_data = Parallel(-1)(delayed(make_abs)(row)
-                            for idx, row in tqdm(df_rel[cols].iterrows(), 
-                                                 total=len(df_rel),
-                                                 desc='to abs', 
-                                                 disable=(not verbose)))
-    df.loc[df.anno_format != 'abs', 'anno_data'] = pd.Series(abs_data, 
-                                                             index=df_rel.index,
-                                                             dtype=object)
-    df['anno_format'] = 'abs'
+    
+    ### joblib workflow
+    if parallel:
+        abs_data = Parallel(parallel)(delayed(make_abs)(row)
+                                for idx, row in tqdm(df_rel[cols].iterrows(), 
+                                                    total=len(df_rel),
+                                                    desc='to abs', 
+                                                    disable=(not verbose)))
+    else:
+        abs_data = list()
+        for idx, row in tqdm(df_rel[cols].iterrows(), total=len(df_rel),
+                            desc='to abs', disable=(not verbose)):
+            abs_data.append(make_abs(row))
+            
+    df.loc[df['anno_format'] == 'rel', 'anno_data'] = pd.Series(abs_data, 
+                                                                index=df_rel.index,
+                                                                dtype=object)
+    df.loc[df['anno_format'] == 'rel', 'anno_format'] = 'abs'
+    ###
+
+    ### apply workflow
+    # df.loc[df['anno_format'] == 'rel', ['anno_data', 'anno_format']] = df.loc[df['anno_format'] == 'rel', cols].apply(lambda x: make_abs(x, True), axis=1, result_type='expand')
+    ###
+    
     return df
+
 
 
 def to_rel(df, path_col='img_path', 
            filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None,
-           verbose=True):
+           verbose=True, parallel=-1):
     ''' Transform all annos to absolute annos
     
     Args:
@@ -78,13 +93,13 @@ def to_rel(df, path_col='img_path',
         pd.DataFrame: transformed dataframe wil absolute annotations
     '''
     df = df.copy()
-    df_abs = df[df['anno_format'] != 'rel']
+    df_abs = df[df['anno_format'] == 'abs']
     cols = [path_col, 'anno_data', 'anno_dtype', 'anno_format']
     def make_rel(row):
-        geom = LOSTGeometries()
         anno_data = row.anno_data
         anno_format = row.anno_format
         if isinstance(anno_data, np.ndarray) and anno_format == 'abs':
+            geom = LOSTGeometries()
             img_path = row[path_col]
             anno_dtype = row.anno_dtype
             img_shape = get_imagesize(img_path, filesystem)
@@ -92,16 +107,24 @@ def to_rel(df, path_col='img_path',
                 anno_data, anno_dtype, anno_format, img_shape
             )
         return anno_data
-        
-    rel_data = Parallel(-1)(delayed(make_rel)(row) 
-                            for idx, row in tqdm(df_abs[cols].iterrows(), 
-                                                 total=len(df_abs),
-                                                 desc='to rel',
-                                                 disable=(not verbose)))
-    df.loc[df.anno_format != 'rel', 'anno_data'] = pd.Series(rel_data, 
-                                                             index=df_abs.index,
-                                                             dtype=object)
-    df['anno_format'] = 'rel'
+    
+    if parallel:
+        rel_data = Parallel(parallel)(delayed(make_rel)(row) 
+                                for idx, row in tqdm(df_abs[cols].iterrows(), 
+                                                    total=len(df_abs),
+                                                    desc='to rel',
+                                                    disable=(not verbose)))
+    else:
+        rel_data = list()
+        for idx, row in tqdm(df_abs[cols].iterrows(), total=len(df_abs),
+                             desc='to rel',disable=(not verbose)):
+            rel_data.append(make_rel(row))
+            
+    df.loc[df['anno_format'] == 'abs', 'anno_data'] = pd.Series(rel_data, 
+                                                                index=df_abs.index,
+                                                                dtype=object)
+    df.loc[df['anno_format'] == 'abs', 'anno_format'] = 'rel'
+    
     return df
 
 
@@ -118,7 +141,7 @@ def transform_bbox_style(dst_style, df):
     df = df.copy()
     geom = LOSTGeometries()
     cols = ['anno_data', 'anno_style']
-    df_bbox = df[df.anno_dtype == 'bbox', cols]
+    df_bbox = df.loc[df.anno_dtype == 'bbox', cols]
     new_data = []
     new_style = []
     for idx, row in df_bbox.iterrows():
@@ -156,6 +179,8 @@ def polygon_to_bbox(df, dst_style=None):
     polygons = df[df.anno_dtype == 'polygon']
     df.loc[df.anno_dtype=='polygon', 'anno_data'] = polygons.anno_data.apply(
         lambda x: geom.poly_to_bbox(x, dst_style))
+    # df.loc[df.anno_dtype=='polygon', 'anno_data'] = polygons.anno_data.apply(
+    #     geom.poly_to_bbox, dst_style)
     columns = ['anno_style', 'anno_dtype']
     df.loc[df.anno_dtype=='polygon', columns] = [dst_style, 'bbox']
     return df

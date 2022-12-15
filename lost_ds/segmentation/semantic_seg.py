@@ -44,7 +44,8 @@ def _get_and_validate_order(order, df, lbl_col, seg_lbl_col):
 def semantic_segmentation(order, dst_dir, fill_value, df, anno_dtypes=['polygon'], 
                           use_empty=False, lbl_col='anno_lbl', 
                           dst_path_col='seg_path', dst_lbl_col='seg_lbl', 
-                          line_thickness=None, radius=None, filesystem=None):
+                          line_thickness=None, radius=None, filesystem=None, 
+                          parallel=-1):
     '''Create semantic segmentations from polygon-annos
     
     Args:
@@ -113,18 +114,18 @@ def semantic_segmentation(order, dst_dir, fill_value, df, anno_dtypes=['polygon'
     
     fs.makedirs(dst_dir, exist_ok=True)
     
-    # # sequential loop
-    # path_map = dict()
-    # for path, img_df in tqdm(df.groupby('img_path'), desc='segmentation'):
-    #     p1, p2 = generate_seg(path, img_df)
-    #     path_map[p1] = p2
+    if parallel:
+        paths = Parallel(n_jobs=parallel)(delayed(generate_seg)(path, img_df) 
+                                        for path, img_df in tqdm(
+                                            df.groupby('img_path'), 
+                                            desc='segmentation'))
+        path_map = {im_path: seg_path for im_path, seg_path in paths}
+    else:
+        path_map = dict()
+        for path, img_df in tqdm(df.groupby('img_path'), desc='segmentation'):
+            p1, p2 = generate_seg(path, img_df)
+            path_map[p1] = p2
     
-    # parallel loop
-    paths = Parallel(n_jobs=-1)(delayed(generate_seg)(path, img_df) 
-                                    for path, img_df in tqdm(
-                                        df.groupby('img_path'), 
-                                        desc='segmentation'))
-    path_map = {im_path: seg_path for im_path, seg_path in paths}
     
     df[dst_path_col] = df.img_path.apply(lambda x: path_map[x])
     return df

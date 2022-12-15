@@ -22,30 +22,31 @@ def split_train_test(test_size=0.2, val_size=0.2, stratify_col=None, df=None,
                      col='img_path', random_state=42):
     if not len(df):
         return df, df, df
-    imgs = list(df[col].unique())
-    n_images = len(imgs)
+    df['split_col'] = df[col].apply(lambda x: hash(str(x)))
+    samples = df['split_col'].unique()
+    n = len(samples)
     stratify = None
-    ids = list(range(n_images))
+    ids = list(range(n))
     if stratify_col:
         stratify = list(df[stratify_col])
-        assert len(imgs) == len(df), 'Images cannot occur multiple time in dataset when using stratify!'
+        assert len(samples) == len(df), 'Samples cannot occur multiple times in dataset when using stratify!'
     splits = []
     for split in [test_size, val_size]:
         if split:
-            size = int(split * n_images)
-            set_1, set_2, ids_1, ids_2 = train_test_split(imgs, ids, test_size=size, 
+            size = int(split * n)
+            set_1, set_2, ids_1, ids_2 = train_test_split(samples, ids, test_size=size, 
                                                           shuffle=True, 
                                                           random_state=random_state,
                                                           stratify=stratify)
-            split_data = label_selection(list(set_2), df=df, col=col)
+            split_data = label_selection(list(set_2), df=df, col='split_col')
             splits.append(split_data)
-            imgs = set_1
+            samples = set_1
             ids = ids_1
             if stratify_col:
                 stratify = list(df.iloc[ids_1][stratify_col])
         else:
             splits.append(None)
-    train_data = label_selection(list(imgs), df=df, col=col)
+    train_data = label_selection(list(samples), df=df, col='split_col')
     splits.insert(0, train_data)
     return tuple(splits)
 
@@ -104,5 +105,8 @@ def split_multilabels(lbl_mapping, df:pd.DataFrame=None, col='anno_lbl'):
     
     df[categories] = pd.DataFrame(list(df[col].apply(
         lambda x: split_labels(x))), columns=categories, index=df.index)
+    
+    # TODO: continue implementation
+    # df[categories] = df[col].apply(split_labels, axis=1, result_type='expand')
     
     return df

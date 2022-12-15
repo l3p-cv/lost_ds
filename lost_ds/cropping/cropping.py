@@ -57,7 +57,8 @@ def crop_img(img, crop_shape=(512, 512), overlap=(0, 0),
     
     
 def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
-                 write_empty=False, fill_value=0, filesystem:FileMan=None):
+                 write_empty=False, fill_value=0, filesystem:FileMan=None,
+                 parallel=-1):
     """Crop the entire dataset with fixed crop-shape
 
     Args:
@@ -105,12 +106,14 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
         else:
             return None
     
-    crop_dfs = Parallel(n_jobs=-1)(delayed(crop_and_recalculate)(path, img_df) 
-                                    for path, img_df in tqdm(df.groupby('img_path'), 
-                                                     desc='crop dataset'))
-    # crop_dfs = []
-    # for path, img_df in tqdm(df.groupby('img_path'), desc='crop dataset'):
-    #     crop_dfs.append(crop_and_recalculate(path, img_df))
+    if parallel:
+        crop_dfs = Parallel(n_jobs=parallel)(delayed(crop_and_recalculate)(path, img_df) 
+                                        for path, img_df in tqdm(df.groupby('img_path'), 
+                                                        desc='crop dataset'))
+    else:
+        crop_dfs = []
+        for path, img_df in tqdm(df.groupby('img_path'), desc='crop dataset'):
+            crop_dfs.append(crop_and_recalculate(path, img_df))
     
     ret_df = pd.concat(crop_dfs)
     
@@ -193,6 +196,7 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
         im_h, im_w = img.shape[:2]
         ret_df = list()
         
+        crop_id = 0
         for idx, row in crop_df.iterrows():
             minx, miny, maxx, maxy = row.anno_data
             w, h = maxx - minx, maxy - miny
@@ -223,7 +227,8 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
 
             # apply crop
             crop = img[miny: maxy, minx: maxx]
-            crop_name = f'{img_path.split("/")[-1].split(".")[0]}_crop_{idx}.{img_path.split(".")[-1]}'
+            crop_name = f'{img_path.split("/")[-1].split(".")[0]}_crop_{crop_id}.{img_path.split(".")[-1]}'
+            crop_id += 1
             crop_path = os.path.join(dst_dir, crop_name)
             fs.write_img(crop, crop_path)
             crop_anno['img_path'] = crop_path

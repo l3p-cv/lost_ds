@@ -9,7 +9,7 @@ from lost_ds.util import get_fs
 
 
 def copy_imgs(df, out_dir, col='img_path', force_overwrite=False, 
-              filesystem=None):
+              filesystem=None, parallel=-1):
     '''Copy all images of dataset into out_dir
 
     Args:
@@ -20,16 +20,21 @@ def copy_imgs(df, out_dir, col='img_path', force_overwrite=False,
             if not initialized
     '''
     fs = get_fs(filesystem)
-    def copy_file(src_path):
-        dst_path = os.path.join(out_dir, os.path.basename(src_path))
+    def copy_file(src_path, dst_dir):
+        dst_path = os.path.join(dst_dir, os.path.basename(src_path))
         if fs.exists(dst_path) and not force_overwrite:
             return
         fs.copy(src_path, dst_path)
         
     fs.makedirs(out_dir, exist_ok=True)
     img_paths = list(df[col].unique())
-    Parallel(n_jobs=-1)(delayed(copy_file)(path) 
-                          for path in tqdm(img_paths, desc='copy imgs'))
+    if parallel:
+        Parallel(n_jobs=parallel)(delayed(copy_file)(path, out_dir) 
+                            for path in tqdm(img_paths, desc='copy imgs'))
+    else:
+        for path in tqdm(img_paths, desc='copy imgs'):
+            copy_file(path, out_dir)
+        
 
 def copy_to_zip(zip_file, df, zip_dir, col='img_path', 
               filesystem=None, progress_callback=None):
@@ -70,7 +75,8 @@ def copy_to_zip(zip_file, df, zip_dir, col='img_path',
                 next_pg += 5
     
 def pack_ds(df, out_dir, cols=['img_path', 'mask_path', 'crop_path'],
-            dirs = ['imgs', 'masks', 'crops'], filesystem=None, zip_file=None, progress_callback=None):
+            dirs = ['imgs', 'masks', 'crops'], filesystem=None, zip_file=None, 
+            progress_callback=None):
     '''Copy all images from dataset to a new place and update the dataframe 
     
     Args:
