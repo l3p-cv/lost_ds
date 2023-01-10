@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] 
+## [1.0.0] - 2023-01-10
 ### Added
 - fixed voc_eval bug where gt_df bboxes weren't handled correctly
 - fixed coco_eval bug - different dataframes having same uids for images and labels now
@@ -13,9 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - resolve FutureWarning at transform_bbox_style
 - make crop_dataset compatible with pandas > 1.5.0 
 - crop_component indexing is imagewise instead of global
-- Add parallel option for multiple functions
 - improve some filter and transform functions
-
+### Breaking changes
+- Add parallel option for multiple functions
+- fix typo in some methods arguments
 
 ## [0.5.0] - 2022-12-02
 ### Added
