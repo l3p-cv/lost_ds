@@ -154,9 +154,12 @@ class FileMan(object):
         ds_type = self._get_dstype(ds_path)
         ds = None
         read_fn = getattr(self.backend, 'read_' + ds_type)
-        open_fn = self.open_text if ds_type == 'csv' else self.open_binary
-        with open_fn(ds_path, 'r') as f:
-            ds = read_fn(f)
+        try:
+            ds = read_fn(ds_path)
+        except: 
+            open_fn = self.open_text if ds_type == 'csv' else self.open_binary
+            with open_fn(ds_path, 'r') as f:
+                ds = read_fn(f)            
         return ds
 
 
