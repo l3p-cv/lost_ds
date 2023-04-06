@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Added
 - retry reading a parquet file without opening as buffer if it fails
+### Fixed
+- vis_and_store can handle multilabel, singlelabel and None correctly now
+- polygon validation fixed. Set required amount of points from 4 to 3.
 
 ## [1.0.0] - 2023-01-10
 ### Added
