@@ -206,7 +206,7 @@ class LOSTGeometries:
             label (string, list of string): single label or multi label
             confidence (float or list of float):
         '''
-        if pd.isna(label):
+        if np.array([pd.isna(label)]).all():
             return None
         conf = text = None
         lbl = label

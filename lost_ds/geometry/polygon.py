@@ -46,7 +46,7 @@ class Polygon(Geometry):
         
                         
     def validate(self, data):
-        return len(data.shape)==2 and len(data)>=4
+        return len(data.shape)==2 and len(data)>=3
 
 
     def segmentation(self, segmentation, color, anno_data, anno_format, 
