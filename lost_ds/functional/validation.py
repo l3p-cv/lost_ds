@@ -31,7 +31,7 @@ def validate_unique_annos(df):
     df = df.copy()
     df['data_hash'] = df.anno_data.apply(lambda x: hash(str(x)))
     df = df.drop_duplicates(['img_path', 'data_hash'])
-    return df.drop('data_hash', 'columns')
+    return df.drop(labels='data_hash', axis='columns')
 
 
 def validate_geometries(df, remove_invalid=True):
