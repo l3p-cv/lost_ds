@@ -280,7 +280,7 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
                      })
         
         # COCO-annos
-        img_df = df[df['img_path']==img_path]
+        img_df = df[df['img_path']==img_path].copy()
         if not img_df['anno_data'].notnull().any():
             continue
         img_df = remove_empty(img_df)
