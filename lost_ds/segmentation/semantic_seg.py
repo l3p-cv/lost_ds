@@ -121,14 +121,19 @@ def semantic_segmentation(order, dst_dir, fill_value, df, anno_dtypes=['polygon'
     
     if parallel:
         paths = Parallel(n_jobs=parallel)(delayed(generate_seg)(i, path, img_df) 
-                                        for i, (path, img_df) in tqdm(
-                                            enumerate(df.groupby('img_path')), 
-                                            desc='segmentation'))
+                                        for i, (path, img_df) in enumerate(
+                                            tqdm(
+                                                df.groupby('img_path'), 
+                                                desc='segmentation')
+                                            )
+                                        )
         path_map = {im_path: seg_path for im_path, seg_path in paths}
     else:
         path_map = dict()
-        for i, (path, img_df) in tqdm(enumerate(df.groupby('img_path')), desc='segmentation'):
-            p1, p2 = generate_seg(path, img_df)
+        for i, (path, img_df) in enumerate(tqdm(df.groupby('img_path'), 
+                                                desc='segmentation')
+                                           ):
+            p1, p2 = generate_seg(i, path, img_df)
             path_map[p1] = p2
     
     
