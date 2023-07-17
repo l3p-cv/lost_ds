@@ -810,7 +810,8 @@ class LOSTDataset(object):
                               anno_dtypes=['polygon'], use_empty=False, 
                               lbl_col='anno_lbl', dst_path_col='seg_path', 
                               dst_lbl_col='seg_lbl', line_thickness=None, 
-                              radius=None, inplace=False, parallel=-1):
+                              radius=None, numeric_filename=False, 
+                              inplace=False, parallel=-1):
         '''Create semantic segmentations from polygon-annos
     
         Args:
@@ -834,6 +835,9 @@ class LOSTDataset(object):
             radius (int): radius of circle-segmentation when using an annotation
                 of dtype point. Only takes effect when anno_dtypes contains 
                 'point'
+            numeric_filename (bool): use same filename for seg and img if False. If
+                True a numeric 12-digit filename will be generated. Usefull if some 
+                files have same filenames.
             inplace (bool): overwrite self.df with result df
                 
         Returns:
@@ -846,7 +850,8 @@ class LOSTDataset(object):
         df = semantic_segmentation(order, dst_dir, fill_value, df, anno_dtypes,
                                    use_empty, lbl_col, dst_path_col, 
                                    dst_lbl_col, line_thickness, radius, 
-                                   self.fileman, parallel=parallel)
+                                   self.fileman, numeric_filename, 
+                                   parallel=parallel)
         return self._update_inplace(df, inplace)
     
     
