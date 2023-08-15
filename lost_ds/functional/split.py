@@ -20,16 +20,50 @@ def split_by_empty(df, col='anno_data'):
 
 def split_train_test(test_size=0.2, val_size=0.2, stratify_col=None, df=None,
                      col='img_path', random_state=42):
-    if not len(df):
-        return df, df, df
-    df['split_col'] = df[col].apply(lambda x: hash(str(x)))
-    samples = df['split_col'].unique()
+    df_base = df.copy()
+    print(len(df_base))
+    img_uid_col = 'img_uid'
+    if not len(df_base):
+        return df_base, df_base, df_base
+    df_base['split_col'] = df_base[col].apply(lambda x: hash(str(x)))
+    samples = df_base['split_col'].unique()
     n = len(samples)
     stratify = None
     ids = list(range(n))
+    # validaton + filtering for stratification
     if stratify_col:
-        stratify = list(df[stratify_col])
-        assert len(samples) == len(df), 'Samples cannot occur multiple times in dataset when using stratify!'
+        stratify = list(df_base[stratify_col])
+        assert len(samples) == len(df_base), 'Samples cannot occur multiple times in dataset when using stratify!'
+        # TODO: look that each class has at least [NR_SPLIT] (== 3) unique values in stratify col
+            # dict: per class look that unique img_uids are at least the number of splits
+        # checking if enough (meaning 3) of each type of class exist to make splits
+        # TODO: check airflow and how it calls this func (with or without startify_col???)
+        # TODO: new kwarg for uid_col???
+        # # img_uids = list(df_base[img_uid_col].unique()) 
+
+        unique_classes = list(df_base[stratify_col].unique())
+        print(len(df_base))
+        for u_class in unique_classes:
+            class_df = df_base[df_base[stratify_col] == u_class]
+            # TODO: check nr of unique imgs / img_uids!!!
+            unique_imgs = class_df[img_uid_col].unique()
+            nr_unique_imgs = len(unique_imgs)
+            print(u_class, nr_unique_imgs)
+            if nr_unique_imgs < 3:
+                to_drop = df_base[df_base[img_uid_col].isin(unique_imgs)]
+                len_to_drop = len(to_drop)
+                df_base = df_base[~df_base[img_uid_col].isin(unique_imgs)]
+                print(f"""Dropped {len_to_drop} entries based off of {nr_unique_imgs} images of class {u_class}, 
+                    due to it not having enough unique source-images""")
+        print(len(df_base))
+        # df_base = df_base.reset_index(drop=True)
+        # print("Reset indexes")
+        samples = df_base['split_col'].unique()
+        n = len(samples)
+        stratify = None
+        ids = list(range(n))
+    
+    # doing the splitting
     splits = []
     for split in [test_size, val_size]:
         if split:
@@ -38,15 +72,17 @@ def split_train_test(test_size=0.2, val_size=0.2, stratify_col=None, df=None,
                                                           shuffle=True, 
                                                           random_state=random_state,
                                                           stratify=stratify)
-            split_data = label_selection(list(set_2), df=df, col='split_col')
+            split_data = label_selection(list(set_2), df=df_base, col='split_col')
             splits.append(split_data)
             samples = set_1
             ids = ids_1
             if stratify_col:
-                stratify = list(df.iloc[ids_1][stratify_col])
+                print(f"IDs1 = {ids_1}")
+                print(max(ids_1), len(df_base))
+                stratify = list(df_base.iloc[ids_1][stratify_col])
         else:
             splits.append(None)
-    train_data = label_selection(list(samples), df=df, col='split_col')
+    train_data = label_selection(list(samples), df=df_base, col='split_col')
     splits.insert(0, train_data)
     return tuple(splits)
 
