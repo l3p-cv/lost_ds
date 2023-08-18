@@ -27,12 +27,10 @@ class Point(Geometry):
         
     
     def crop(self, crop_pos, data, **kwargs):
+        intersection, intersects = self._crop_intersection(crop_pos, data)
+        if not intersects:
+            return intersection
         xmin, ymin, xmax, ymax = crop_pos.bounds
-        point = self.to_shapely(data)
-        intersection = point.intersection(crop_pos)
-        if intersection.is_empty:
-            return [np.nan]
-        
         new_points = []
         if isinstance(intersection, MultiPoint):
             new_points = list(intersection.geoms)
