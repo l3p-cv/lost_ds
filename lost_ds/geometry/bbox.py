@@ -58,12 +58,10 @@ class Bbox(Geometry):
     
     
     def crop(self, crop_pos, data, style):
+        intersection, intersects = self._crop_intersection(crop_pos, data)
+        if not intersects:
+            return intersection
         xmin, ymin, xmax, ymax = crop_pos.bounds
-        bbox = self.to_shapely(data, style)
-        intersection = bbox.intersection(crop_pos)
-        if intersection.is_empty:
-            return [np.nan]
-        
         new_bboxes = []
         if isinstance(intersection, MultiPolygon):
             new_bboxes = list(intersection.geoms)

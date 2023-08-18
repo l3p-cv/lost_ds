@@ -26,12 +26,10 @@ class Line(Geometry):
     
     
     def crop(self, crop_pos, data, **kwargs):
+        intersection, intersects = self._crop_intersection(crop_pos, data)
+        if not intersects:
+            return intersection
         xmin, ymin, xmax, ymax = crop_pos.bounds
-        line = self.to_shapely(data)
-        intersection = line.intersection(crop_pos)
-        if intersection.is_empty:
-            return [np.nan]
-        
         new_lines = []
         if isinstance(intersection, MultiLineString):
             new_lines = list(intersection.geoms)

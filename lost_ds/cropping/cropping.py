@@ -3,7 +3,7 @@ import os
 from tqdm import tqdm
 import pandas as pd 
 from joblib import Parallel, delayed, cpu_count
-from lost_ds.functional.filter import label_selection, selection_mask
+from lost_ds.functional.filter import label_selection, selection_mask, remove_empty
 import numpy as np
 from lost_ds.functional.transform import to_abs, polygon_to_bbox
 
@@ -89,18 +89,26 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
         result_df = []
         for i, position in enumerate(positions):
             crop_name = img_name + '_crop_' + str(i) + '.' + img_ending
-            crop_path = os.path.join(dst_dir, crop_name)
+            crop_path = os.path.abspath(os.path.join(dst_dir, crop_name))
             crop_df = cropper.crop_anno(img_path, img_df, position, im_w, im_h, 
                                         padding)
             data_present = crop_df['anno_data'].notnull()
             
+            # padding is ((top, bot), (left, right))
+            pad_y, pad_x = padding[0][0], padding[1][0]
+            crop_position = position - [pad_x, pad_y, pad_x, pad_y]
+            
             if data_present.any() or write_empty:
                 crop_df['img_path'] = crop_path
-                # padding is ((top, bot), (left, right))
-                pad_y, pad_x = padding[0][0], padding[1][0]
-                crop_df['crop_position'] = crop_df['img_path'].apply(lambda x: position - [pad_x, pad_y, pad_x, pad_y])
+                crop_df['crop_position'] = crop_df['img_path'].apply(lambda x: crop_position)
                 cropper.fs.write_img(crops[i], crop_path)
-                result_df.append(crop_df)
+                data_df = crop_df[data_present]
+                if write_empty:
+                    empty_df = crop_df.loc[~data_present].drop_duplicates('img_path')
+                    if not len(data_df):
+                        data_df = pd.concat([data_df, empty_df])
+                result_df.append(data_df)
+                
         if len(result_df):
             return pd.concat(result_df)
         else:

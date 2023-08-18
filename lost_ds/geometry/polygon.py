@@ -16,15 +16,10 @@ class Polygon(Geometry):
     
     
     def crop(self, crop_pos, data, **kwargs):
+        intersection, intersects = self._crop_intersection(crop_pos, data)
+        if not intersects:
+            return intersection
         xmin, ymin, xmax, ymax = crop_pos.bounds
-        try:
-            poly = self.to_shapely(data).buffer(0)
-        except ValueError:
-            return [np.nan]
-        intersection = poly.intersection(crop_pos)
-        if intersection.is_empty:
-            return [np.nan]
-        
         new_polys = []
         if isinstance(intersection, MultiPolygon):
             new_polys = list(intersection.geoms)
