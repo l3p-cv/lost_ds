@@ -95,3 +95,15 @@ class Geometry(object):
     def blow_up(self):
         pass
     
+        
+    def _crop_intersection(self, crop_pos, data):
+        try:
+            geo = self.to_shapely(data).buffer(0)
+        except ValueError:
+            return [np.nan]
+        if geo.intersects(crop_pos):
+            intersection = geo.intersection(crop_pos)
+            return intersection, True
+        else:
+            return [np.nan], False
+        
