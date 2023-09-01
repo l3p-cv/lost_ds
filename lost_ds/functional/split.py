@@ -113,7 +113,7 @@ def create_multilabel_data(df, anno_col='anno_lbl', mult_col='mult_lbl'):
     unique_img_df = df.drop_duplicates('img_path')
     for path, path_df in df.groupby('img_path'):
         unrefined_lbls = [x[0] for x in path_df[anno_col].to_list() if len(x) > 0]
-        indexes = unique_img_df[unique_img_df['img_path'] == path].index
+        indexes = path_df.index
         unique_img_df.at[indexes[0], mult_col] = unrefined_lbls
         
     return unique_img_df
