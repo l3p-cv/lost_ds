@@ -108,13 +108,13 @@ def split_train_test(test_size=0.2, val_size=0.2, stratify_col=None, df=None,
     return tuple(splits)
 
 
-def create_multilabel_data(df, anno_col='anno_lbl', mult_col='mult_lbl'):
+def create_multilabel_data(df, anno_col='anno_lbl', mult_col='mult_lbl', single_lbls='single_lbl'):
     """Creates a column with multilabel data and drops unique image-paths"""
     unique_img_df = df.drop_duplicates('img_path')
     for path, path_df in df.groupby('img_path'):
-        unrefined_lbls = [x[0] for x in path_df[anno_col].to_list() if len(x) > 0]
+        multi_lbl_list = path_df[single_lbls].unique()
         indexes = path_df.index
-        unique_img_df.at[indexes[0], mult_col] = unrefined_lbls
+        unique_img_df.at[indexes[0], mult_col] = multi_lbl_list
         
     return unique_img_df
 
