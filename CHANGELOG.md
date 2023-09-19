@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - polygon validation fixed. Set required amount of points from 4 to 3.
 - fixed in `validate_unique_annos` pandas drop() future warning
 - `crop_dataset` does not produce empty duplicates of crop positions anymore
+- `segmentation_to_lost` fix bug where some contours of different classes were merged accidentially
+- `mask_dataset` won't overwrite input dataframe anymore
 
 ## [1.0.0] - 2023-01-10
 ### Added
