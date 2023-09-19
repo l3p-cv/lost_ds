@@ -5,9 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
+### Changed
+- `split_train_test` now filters samples with too few unique sources to prevent errors in sklearn
 ### Added
 - retry reading a parquet file without opening as buffer if it fails
 - semantic_segmentation can store files with numeric names
+- new function: `split_train_test_multilabel` for fairly splitting multilabel datasets
 ### Fixed
 - vis_and_store can handle multilabel, singlelabel and None correctly now
 - polygon validation fixed. Set required amount of points from 4 to 3.

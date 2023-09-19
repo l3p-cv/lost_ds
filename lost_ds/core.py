@@ -13,6 +13,7 @@ from lost_ds.functional.validation import (validate_geometries,
 from lost_ds.functional.split import (split_by_empty,
                                       split_by_img_path,
                                       split_train_test,
+                                      split_train_test_multilabel,
                                       split_multilabels)
 
 from lost_ds.functional.filter import (remove_empty,
@@ -525,6 +526,34 @@ class LOSTDataset(object):
                                 stratify_col=stratify_col, df=df, col=col,
                                 random_state=random_state)
         
+    def split_train_test_multilabel(self, stratify_col, test_size=0.2, val_size=0.2, df=None,
+                     col='img_path', uid_col='img_uid', random_state=42):
+        """Splits dataframe into train, test and val datasets via multilabel stratification.
+        Slow when it comes to big datasets. Use the faster split_train_test() if possible.
+    
+        Args:
+            stratify_col (str): Column whose classes get distributed to the different splits.
+                Each entry has to be a list of labels (multilabel). The entries will be merged
+                according to the uid_col, to create the real multilabels for each entry.
+            test_size (float): Value between 0.0 and 1.0 describing how much data is used for the test set.
+                Defaults to 0.2
+            val_size (float): same as test_size, but for the validation set
+            df (pd.DataFrame): The data to split
+            col (str): Column with samples (should be unique values if using stratify_col)
+            img_uid_col (str): column saying which unique sources are in the dataframe.
+                There have to be at least enough unique sources (per class in stratify_col) in this column, to place 1 instance in each split.
+                Only relevant if stratify_col is not None.
+                Defaults to img_uid.
+            random_state (int): Seed for random operations.
+                Defaults to 42
+        
+        Returns:
+            The created splits as a tuple
+        """
+        df = self._get_df(df)
+        return split_train_test_multilabel(stratify_col=stratify_col, test_size=test_size, val_size=val_size, df=df,
+                                           col=col, uid_col=uid_col, random_state=random_state)
+
     def split_by_img_path(self, test_size=0.2, val_size=0.2, df=None, 
                           random_state=42):
         '''Split dataset based on img paths (for dataset with multiple 
