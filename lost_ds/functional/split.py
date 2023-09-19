@@ -22,7 +22,7 @@ def split_by_empty(df, col='anno_data'):
     return not_empty_df, empty_df
 
 def split_train_test(test_size=0.2, val_size=0.2, stratify_col=None, df=None,
-                     col='img_path', uid_col='img_uid', random_state=42):
+                     col='img_path', uid_col=None, random_state=42):
     """Splits dataframe into train, test and val datasets.
     
     Args:
@@ -63,25 +63,26 @@ def split_train_test(test_size=0.2, val_size=0.2, stratify_col=None, df=None,
         stratify = list(df_base[stratify_col])
         assert len(samples) == len(df_base), 'Samples cannot occur multiple times in dataset when using stratify!'
 
-        unique_classes = list(df_base[stratify_col].unique())
-        # check nr of unique sources per class
-        # HACK: could use validate_single_labels() here, but that causes circular imports...
-        for u_class in unique_classes:
-            class_df = df_base[df_base[stratify_col] == u_class]
-            unique_imgs = class_df[uid_col].unique()
-            nr_unique_imgs = len(unique_imgs)
-            print(u_class, nr_unique_imgs)
-            # has enough base-imgs per class per split
-            if nr_unique_imgs < nr_splits:
-                to_drop = df_base[df_base[uid_col].isin(unique_imgs)]
-                len_to_drop = len(to_drop)
-                df_base = df_base[~df_base[uid_col].isin(unique_imgs)]
-                print(f"""Dropped {len_to_drop} entries based off of {nr_unique_imgs} images of class {u_class}, 
-                    due to it not having enough unique source-images""")
-        samples = df_base['split_col'].unique()
-        n = len(samples)
-        ids = list(range(n))
-        stratify = list(df_base[stratify_col])
+        if uid_col is not None:
+            unique_classes = list(df_base[stratify_col].unique())
+            # check nr of unique sources per class
+            # HACK: could use validate_single_labels() here, but that causes circular imports...
+            for u_class in unique_classes:
+                class_df = df_base[df_base[stratify_col] == u_class]
+                unique_imgs = class_df[uid_col].unique()
+                nr_unique_imgs = len(unique_imgs)
+                print(u_class, nr_unique_imgs)
+                # has enough base-imgs per class per split
+                if nr_unique_imgs < nr_splits:
+                    to_drop = df_base[df_base[uid_col].isin(unique_imgs)]
+                    len_to_drop = len(to_drop)
+                    df_base = df_base[~df_base[uid_col].isin(unique_imgs)]
+                    print(f"""Dropped {len_to_drop} entries based off of {nr_unique_imgs} images of class {u_class}, 
+                        due to it not having enough unique source-images""")
+            samples = df_base['split_col'].unique()
+            n = len(samples)
+            ids = list(range(n))
+            stratify = list(df_base[stratify_col])
     
     # doing the splitting
     splits = []
