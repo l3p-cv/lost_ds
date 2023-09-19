@@ -26,6 +26,8 @@ def _segmentation_to_polygon(segmentation, pixel_mapping: dict, background,
     
     # iterate over all classes and get their segmentations
     for v in u_values:
+        if not v in pixel_mapping.keys():
+            continue
         # create color pixel map to detect contours of class v
         v_seg = segmentation.copy()
         v_seg[segmentation!=v] = 0
@@ -55,6 +57,8 @@ def _segmentation_to_polygon(segmentation, pixel_mapping: dict, background,
                 continue
             # choose most occuring pixel as class
             px = u_px_vals[np.argmax(cnts)]
+            if px != v:
+                continue
             # consider unknown pixel value as background if `cast_others`
             if not px in expected_values and cast_others:
                 px = 0
