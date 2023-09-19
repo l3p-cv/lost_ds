@@ -1,7 +1,6 @@
-from shapely.geometry import Polygon, MultiPolygon
 import cv2
 from tqdm import tqdm
-from joblib import Parallel, delayed, cpu_count
+from joblib import Parallel, delayed
 import numpy as np 
 import pandas as pd 
 
@@ -10,7 +9,8 @@ from lost_ds.im_util import get_fs
 
 def _segmentation_to_polygon(segmentation, pixel_mapping: dict, background, 
                              cast_others):
-    
+    if len(segmentation.shape)==3:
+        segmentation = cv2.cvtColor(segmentation, cv2.COLOR_BGR2GRAY)
     u_values = np.unique(segmentation)
     expected_values = np.unique(list(pixel_mapping.keys()) + [background])
     setdiff = np.setdiff1d(u_values, expected_values)
@@ -18,50 +18,54 @@ def _segmentation_to_polygon(segmentation, pixel_mapping: dict, background,
         raise ValueError(f'Got pixel values {u_values} expected ' \
                          f'{expected_values} from {pixel_mapping} ' \
                          f'(unexpected values {list(setdiff)})')
-            
-    if len(segmentation.shape)==3:
-        segmentation = cv2.cvtColor(segmentation, cv2.COLOR_BGR2GRAY)        
     
     im_h, im_w = segmentation.shape
     
     lbl_name = []
     lost_polygons = []
     
-    contours, _ = cv2.findContours(segmentation, cv2.RETR_CCOMP, 
-                                   cv2.CHAIN_APPROX_SIMPLE)
-    contours = map(np.squeeze, contours)
-    cont_seg = np.zeros_like(segmentation)
-    valid_contours, contour_pixels = list(), list()
-    
-    for idx, cont in enumerate(contours):
-        if len(cont) < 4:
-            continue
-        cont_seg = cv2.drawContours(cont_seg, [cont], 0, idx + 1, -1)# fill poly
-        cont_seg = cv2.drawContours(cont_seg, [cont], 0, 0, 1) # ignore border
-        valid_contours.append(cont)
-        contour_pixels.append(idx + 1)
-            
-    for px_pos, cont in zip(contour_pixels, valid_contours):
-        # pick pixels
-        px_vals = segmentation[cont_seg==px_pos]
-        # find unique pixels
-        u_px_vals, cnts = np.unique(px_vals, return_counts=True)
-        if not len(u_px_vals):
-            continue
-        # choose most occuring pixel as class
-        px = u_px_vals[np.argmax(cnts)]
-        # consider unknown pixel value as background if `cast_others`
-        if not px in expected_values and cast_others:
-            px = 0
-        # ignore background if not provided
-        if px == background and not background in list(pixel_mapping.keys()):
-            continue
-        cont = np.array(cont) / np.array([im_w, im_h])
-        lost_polygons.append(cont)
-        lbl_name.append([pixel_mapping[px]])
+    # iterate over all classes and get their segmentations
+    for v in u_values:
+        # create color pixel map to detect contours of class v
+        v_seg = segmentation.copy()
+        v_seg[segmentation!=v] = 0
+        v_seg[segmentation==v] = 255
+        
+        # get contours
+        contours, _ = cv2.findContours(v_seg, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+        contours = map(np.squeeze, contours)
+        cont_seg = np.zeros_like(v_seg)
+        valid_contours, contour_pixels = list(), list()
+        
+        # validate contours
+        for idx, cont in enumerate(contours):
+            if len(cont) < 4:
+                continue
+            cont_seg = cv2.drawContours(cont_seg, [cont], 0, idx + 1, -1)# fill poly
+            cont_seg = cv2.drawContours(cont_seg, [cont], 0, 0, 1) # ignore border
+            valid_contours.append(cont)
+            contour_pixels.append(idx + 1)
+                
+        for px_pos, cont in zip(contour_pixels, valid_contours):
+            # pick pixels
+            px_vals = segmentation[cont_seg==px_pos]
+            # find unique pixels
+            u_px_vals, cnts = np.unique(px_vals, return_counts=True)
+            if not len(u_px_vals):
+                continue
+            # choose most occuring pixel as class
+            px = u_px_vals[np.argmax(cnts)]
+            # consider unknown pixel value as background if `cast_others`
+            if not px in expected_values and cast_others:
+                px = 0
+            # ignore background if not provided
+            if px == background and not background in list(pixel_mapping.keys()):
+                continue
+            cont = np.array(cont) / np.array([im_w, im_h])
+            lost_polygons.append(cont)
+            lbl_name.append([pixel_mapping[px]])
 
     return lost_polygons, lbl_name
-
 
 def segmentation_to_lost(df: pd.DataFrame, pixel_mapping, background=0, 
                          seg_key='seg_path', cast_others=False, filesystem=None,
