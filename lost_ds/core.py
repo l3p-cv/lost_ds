@@ -37,7 +37,6 @@ from lost_ds.copy import (copy_imgs,
                           )
 
 from lost_ds.vis.vis import (vis_and_store,
-                             vis_sample,
                              vis_semantic_segmentation,
                              )
 
@@ -56,7 +55,7 @@ from lost_ds.detection.detection import detection_dataset, bbox_nms
 
 from lost_ds.masking.masking import mask_dataset
 
-from lost_ds.util import get_fs, to_parquet
+from lost_ds.util import to_parquet
 
 
 class LOSTDataset(object):
@@ -950,7 +949,8 @@ class LOSTDataset(object):
     #
     
     def mask_dataset(self, dst_dir, masking_labels, mask_value=0, inverse=False, 
-                     lbl_col='anno_lbl', df=None, inplace=False):
+                     lbl_col='anno_lbl', dst_col='img_path', df=None, 
+                     inplace=False, parallel=-1):
         """mask images by annos of given label. Either mask the given annos itself 
         (inverse=False) or everything but the annos (inverse=True)
 
@@ -965,5 +965,5 @@ class LOSTDataset(object):
         """
         df = self._get_df(df)
         df = mask_dataset(df, dst_dir, masking_labels, mask_value, inverse, 
-                          lbl_col, self.fileman)
+                          lbl_col, dst_col, self.fileman, parallel=parallel)
         return self._update_inplace(df, inplace)
