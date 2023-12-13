@@ -29,6 +29,8 @@ class LOSTGeometries:
             data = data.tolist()
         if not isinstance(data, list):
             return [[data]]
+        elif isinstance(data, list) and len(data) == 0:
+            return [data]
         elif not isinstance(data[0], list):
             return [data]
         elif not isinstance(data[0][0], list):
