@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Changed
 - `split_train_test` now filters samples with too few unique sources to prevent errors in sklearn
+- refactored to_abs and to_rel method for easier readability and better performance
 ### Added
 - retry reading a parquet file without opening as buffer if it fails
 - semantic_segmentation can store files with numeric names
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `crop_dataset` does not produce empty duplicates of crop positions anymore
 - `segmentation_to_lost` fix bug where some contours of different classes were merged accidentially
 - `mask_dataset` won't overwrite input dataframe anymore
+- added a serialization case where a columns has empty lists
 
 ## [1.0.0] - 2023-01-10
 ### Added
