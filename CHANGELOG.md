@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Your stuff here
 
+## [1.1.1] - 2024-01-22
+### Fixed
+- Try to fix pypy build
+
 ## [1.1.0] - 2024-01-22
 ### Changed
 - `split_train_test` now filters samples with too few unique sources to prevent errors in sklearn
