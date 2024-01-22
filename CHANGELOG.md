@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Changed
+- Your stuff here
+
+## [1.1.0] - 2024-01-22
+### Changed
 - `split_train_test` now filters samples with too few unique sources to prevent errors in sklearn
 - refactored to_abs and to_rel method for easier readability and better performance
 ### Added
