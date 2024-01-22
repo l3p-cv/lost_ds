@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - retry reading a parquet file without opening as buffer if it fails
 - semantic_segmentation can store files with numeric names
 - new function: `split_train_test_multilabel` for fairly splitting multilabel datasets
+- added requirements
 ### Fixed
 - vis_and_store can handle multilabel, singlelabel and None correctly now
 - polygon validation fixed. Set required amount of points from 4 to 3.
