@@ -1,4 +1,4 @@
-image: docker.km3net.de/base/python:3
+image: python:3.8
 
 stages:
 - test-lost_ds
