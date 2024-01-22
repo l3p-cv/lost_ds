@@ -54,7 +54,7 @@ def remap_labels(df, label_mapping,  col='anno_lbl', dst_col='anno_lbl_mapped'):
             label_mapping[l] = l
     if is_multilabel(df, dst_col):
         df[dst_col] = df[dst_col].apply(lambda x: 
-            [label_mapping[l] for l in x])
+            [label_mapping[l] for l in x if not label_mapping[l] is None])
     else:
         df[dst_col] = df[dst_col].apply(lambda x: label_mapping[x])
     return df
