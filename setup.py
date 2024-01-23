@@ -5,8 +5,9 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 # read required packages from requirements.txt
-thelibFolder = os.path.dirname(os.path.realpath(__file__))
-requirementPath = thelibFolder + '/requirements.txt'
+# thelibFolder = os.path.dirname(os.path.realpath(__file__))
+# requirementPath = thelibFolder + '/requirements.txt'
+requirementPath = 'requirements.txt'
 install_requires = [] 
 if os.path.isfile(requirementPath):
     with open(requirementPath) as f:
