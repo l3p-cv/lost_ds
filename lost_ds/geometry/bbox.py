@@ -58,7 +58,7 @@ class Bbox(Geometry):
     
     
     def crop(self, crop_pos, data, style):
-        intersection, intersects = self._crop_intersection(crop_pos, data)
+        intersection, intersects = self._crop_intersection(crop_pos, data, style=style)
         if not intersects:
             return intersection
         xmin, ymin, xmax, ymax = crop_pos.bounds
