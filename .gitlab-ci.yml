@@ -22,7 +22,7 @@ release-lost_ds:
     - echo "__version__='${CI_COMMIT_TAG}'" >> lost_ds/__init__.py
     - sed -i 's/version="donotchange"/version="'"$CI_COMMIT_TAG"'"/' setup.py
     - pip install -U twine
-    - python setup.py sdist
+    - python -m build
     - twine upload dist/*
   only:
     - tags

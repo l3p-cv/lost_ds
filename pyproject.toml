@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lost_ds"
+authors = [
+    {name="L3bm GmbH", email="info@l3bm.com"},
+]
+description="Lost Dataset library"
+readme = "README.md"
+license= {text="MIT"}
+requires-python=">=3.6"
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dynamic = ["version", "dependencies"]
+
+[project.urls]
+Repository = "https://github.com/l3p-cv/lost_ds"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
