@@ -96,9 +96,9 @@ class Geometry(object):
         pass
     
         
-    def _crop_intersection(self, crop_pos, data):
+    def _crop_intersection(self, crop_pos, data, **kwargs):
         try:
-            geo = self.to_shapely(data).buffer(0)
+            geo = self.to_shapely(data, **kwargs).buffer(0)
         except ValueError:
             return [np.nan]
         if geo.intersects(crop_pos):
