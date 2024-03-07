@@ -793,7 +793,7 @@ class LOSTDataset(object):
                                      overlap=overlap, fill_value=fill_value)
     
     
-    def crop_components(self, dst_dir, base_labels=-1, lbl_col='anno_lbl', 
+    def crop_components(self, dst_dir=None, base_labels=-1, lbl_col='anno_lbl', 
                         context=0, df=None, context_alignment=None, 
                         min_size=None, anno_dtype=['polygon'], 
                         center_lbl_key='center_lbl', inplace=False, 
@@ -802,7 +802,8 @@ class LOSTDataset(object):
 
         Args:
             df (pd.DataFrame): dataframe to apply bbox typecast
-            dst_dir (str): Directory to store the new dataset
+            dst_dir (str, None): Directory to store the crops. If None no 
+                cropping will be done.
             base_labels (list of str): labels to align the crops 
             lbl_col (str): column holding the labels
             context (float, tuple of floats): context to add to each component for 
