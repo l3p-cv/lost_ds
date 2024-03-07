@@ -11,6 +11,7 @@ from lost_ds.io.file_man import FileMan
 from lost_ds.functional.validation import validate_empty_images
 from lost_ds.cropping.ds_cropper import DSCropper
 from lost_ds.util import get_fs
+from lost_ds.im_util import get_imagesize
 
 
 def crop_anno(img_path, crop_position, df, im_w=None, im_h=None, 
@@ -136,7 +137,133 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
     return ret_df
 
 
-def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0, 
+# def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0, 
+#                     context_alignment=None, min_size=None, 
+#                     anno_dtype=['polygon'], center_lbl_key='center_lbl', 
+#                     filesystem:FileMan=None, parallel=-1):
+#     """Crop the entire dataset with fixed crop-shape
+
+#     Args:
+#         df (pd.DataFrame): dataframe to apply bbox typecast
+#         dst_dir (str): Directory to store the new dataset
+#         base_labels (list of str): labels to align the crops 
+#         lbl_col (str): column holding the labels
+#         context (float, tuple of floats): context to add to each component for 
+#             cropping (twice -> left/right, top/bottom). If tuple of float: uses 
+#             the given floats as fraction of the components (H, W) to calculate 
+#             the added contexts. 
+#         context_alignment (str): Define alignment of the crop-context. One of 
+#             [None, 'max', 'min', 'flip']. 
+#             None: Use H/W-context in H/W-dimension
+#             max: use maximum of H-context, W-context for both dimensions
+#             min: use minimum of H-context, W-context for both dimensions
+#             flip: use H-context in W-dimension and vice versa. This makes the 
+#                 crop a little bit more squarish shaped
+#         min_size (int, tuple of int): minimum size of produced crops in both
+#             dimensions if int or for (H, W) if tuple of int
+#         anno_dtype (list of str): dtype to apply on
+#         center_lbl_key (str): column containing the label the crop was aligned to
+#         filesystem (fsspec.filesystem, FileMan): filesystem to use. Use local
+#             if not initialized
+            
+#     Returns:
+#         pd.DataFrame
+#     """
+    
+#     cropper = DSCropper(filesystem=filesystem)
+#     fs = get_fs(filesystem)
+#     fs.makedirs(dst_dir, True)
+#     df = validate_empty_images(df)
+#     if len(np.setdiff1d(anno_dtype, ['polygon', 'bbox'])):
+#         raise NotImplementedError(f'Component cropping does not support {anno_dtype}')
+    
+#     df = to_abs(df, filesystem=filesystem, verbose=False)
+#     df[center_lbl_key] = False
+#     context_y = context_x = context
+#     if not isinstance(context, (float, int)):
+#         context_y, context_x = context
+    
+#     min_size_y = min_size_x = 0
+#     if not isinstance(min_size, int) and min_size is not None:
+#         min_size_y, min_size_x = min_size
+#     if isinstance(min_size, int):
+#         min_size_x = min_size_y = min_size
+    
+#     def crop_and_recalculate(img_path, img_df):
+#         if base_labels == -1:
+#             base_df = img_df
+#         else:
+#             base_df = label_selection(base_labels, img_df, col=lbl_col)
+#         if not len(base_df):
+#             return None
+#         crop_df = base_df[selection_mask(anno_dtype, base_df, 'anno_dtype')].copy()
+#         if not len(crop_df):
+#             return None
+#         crop_df = polygon_to_bbox(crop_df, 'x1y1x2y2')
+        
+#         img = fs.read_img(img_path)
+#         im_h, im_w = img.shape[:2]
+#         ret_df = list()
+        
+#         crop_id = 0
+#         for idx, row in crop_df.iterrows():
+#             minx, miny, maxx, maxy = row.anno_data
+#             w, h = maxx - minx, maxy - miny
+#             x_marg, y_marg = context_x * w, context_y * h
+#             if context_alignment == 'flip':
+#                 x_marg, y_marg = y_marg, x_marg
+#             elif context_alignment == 'max':
+#                 x_marg = y_marg = max(x_marg, y_marg)
+#             elif context_alignment == 'min':
+#                 x_marg = y_marg = min(x_marg, y_marg)
+                
+#             range_w = int(minx - x_marg), int(maxx + x_marg)
+#             range_h = int(miny - y_marg), int(maxy + y_marg)
+#             w, h = range_w[1] - range_w[0], range_h[1] - range_h[0]
+            
+#             if w < min_size_x:
+#                 diff = min_size_x - w
+#                 range_w = (int(range_w[0]-diff/2), int(range_w[1] + diff/2))
+#             if h < min_size_y:
+#                 diff = min_size_y - h
+#                 range_h = (int(range_h[0]-diff/2), int(range_h[1] + diff/2))
+            
+#             minx, maxx,  = np.clip(range_w, 0, im_w) 
+#             miny, maxy = np.clip(range_h, 0, im_h)
+            
+#             crop_pos = [minx, miny, maxx, maxy]
+#             crop_anno = cropper.crop_anno(img_path, img_df, crop_pos, im_w, im_h)
+
+#             # apply crop
+#             crop = img[miny: maxy, minx: maxx]
+#             crop_name = f'{img_path.split("/")[-1].split(".")[0]}_crop_{crop_id}.{img_path.split(".")[-1]}'
+#             crop_id += 1
+#             crop_path = os.path.join(dst_dir, crop_name)
+#             fs.write_img(crop, crop_path)
+#             crop_anno['img_path'] = crop_path
+#             crop_anno['crop_position'] = crop_anno['img_path'].apply(lambda x: [minx, miny, maxx, maxy])
+#             crop_anno.loc[idx, center_lbl_key] = True
+#             ret_df.append(crop_anno)    
+#         if len(ret_df):
+#             return pd.concat(ret_df)
+#         else: 
+#             return None
+        
+#     if parallel:
+#         crop_dfs = Parallel(n_jobs=parallel)(delayed(crop_and_recalculate)(path, df) 
+#                                              for path, df in tqdm(df.groupby('img_path'), 
+#                                                                   desc='crop dataset'))
+#     else:
+#         crop_dfs = []
+#         for path, df in tqdm(df.groupby('img_path'), desc='crop dataset'):
+#             crop_dfs.append(crop_and_recalculate(path, df))
+    
+#     # TODO: return empty df if noting to crop
+#     return pd.concat(crop_dfs)
+
+
+
+def crop_components(df, dst_dir=None, base_labels=-1, lbl_col='anno_lbl', context=0, 
                     context_alignment=None, min_size=None, 
                     anno_dtype=['polygon'], center_lbl_key='center_lbl', 
                     filesystem:FileMan=None, parallel=-1):
@@ -144,7 +271,8 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
 
     Args:
         df (pd.DataFrame): dataframe to apply bbox typecast
-        dst_dir (str): Directory to store the new dataset
+        dst_dir (str, None): Directory to store the crops. If None no cropping 
+            will be done.
         base_labels (list of str): labels to align the crops 
         lbl_col (str): column holding the labels
         context (float, tuple of floats): context to add to each component for 
@@ -168,10 +296,14 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
     Returns:
         pd.DataFrame
     """
-    
+     
     cropper = DSCropper(filesystem=filesystem)
     fs = get_fs(filesystem)
-    fs.makedirs(dst_dir, True)
+    crop_image = True
+    if dst_dir is None:
+        crop_image = False
+    if crop_image:
+        fs.makedirs(dst_dir, True)
     df = validate_empty_images(df)
     if len(np.setdiff1d(anno_dtype, ['polygon', 'bbox'])):
         raise NotImplementedError(f'Component cropping does not support {anno_dtype}')
@@ -189,25 +321,41 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
         min_size_x = min_size_y = min_size
     
     def crop_and_recalculate(img_path, img_df):
+        # pick labels to crop
         if base_labels == -1:
             base_df = img_df
         else:
             base_df = label_selection(base_labels, img_df, col=lbl_col)
+        
         if not len(base_df):
             return None
+        
+        # pick anno types to crop
         crop_df = base_df[selection_mask(anno_dtype, base_df, 'anno_dtype')].copy()
+        
         if not len(crop_df):
             return None
+        
+        # crops have to be bboxes
         crop_df = polygon_to_bbox(crop_df, 'x1y1x2y2')
         
-        img = fs.read_img(img_path)
-        im_h, im_w = img.shape[:2]
-        ret_df = list()
+        # get image and/or information
+        if crop_image:
+            img = fs.read_img(img_path)
+            im_h, im_w = img.shape[:2]
+        else:
+            im_h, im_w = get_imagesize(img_path)
         
+        # iterate over images, calculate crop, crop image and anno
+        ret_df = list()
         crop_id = 0
         for idx, row in crop_df.iterrows():
+            
+            # get crop position
             minx, miny, maxx, maxy = row.anno_data
             w, h = maxx - minx, maxy - miny
+            
+            # calculate context and alignment as specified in args
             x_marg, y_marg = context_x * w, context_y * h
             if context_alignment == 'flip':
                 x_marg, y_marg = y_marg, x_marg
@@ -215,11 +363,13 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
                 x_marg = y_marg = max(x_marg, y_marg)
             elif context_alignment == 'min':
                 x_marg = y_marg = min(x_marg, y_marg)
-                
+            
+            # new crop shape
             range_w = int(minx - x_marg), int(maxx + x_marg)
             range_h = int(miny - y_marg), int(maxy + y_marg)
             w, h = range_w[1] - range_w[0], range_h[1] - range_h[0]
             
+            # crop min size
             if w < min_size_x:
                 diff = min_size_x - w
                 range_w = (int(range_w[0]-diff/2), int(range_w[1] + diff/2))
@@ -227,22 +377,33 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
                 diff = min_size_y - h
                 range_h = (int(range_h[0]-diff/2), int(range_h[1] + diff/2))
             
+            # take care the crops are inside the image
             minx, maxx,  = np.clip(range_w, 0, im_w) 
             miny, maxy = np.clip(range_h, 0, im_h)
             
+            # final crop position with aligned context
             crop_pos = [minx, miny, maxx, maxy]
+            
+            # crop annotation
             crop_anno = cropper.crop_anno(img_path, img_df, crop_pos, im_w, im_h)
-
-            # apply crop
-            crop = img[miny: maxy, minx: maxx]
-            crop_name = f'{img_path.split("/")[-1].split(".")[0]}_crop_{crop_id}.{img_path.split(".")[-1]}'
-            crop_id += 1
-            crop_path = os.path.join(dst_dir, crop_name)
-            fs.write_img(crop, crop_path)
-            crop_anno['img_path'] = crop_path
-            crop_anno['crop_position'] = crop_anno['img_path'].apply(lambda x: [minx, miny, maxx, maxy])
             crop_anno.loc[idx, center_lbl_key] = True
+            crop_anno['crop_position'] = crop_anno['img_path'].apply(lambda x: [minx, miny, maxx, maxy])
+            crop_anno['crop_id'] = crop_id
+            
+            # crop image and save it, add path to dataframe
+            if crop_image:
+                crop = img[miny: maxy, minx: maxx]
+                crop_name = f'{img_path.split("/")[-1].split(".")[0]}_crop_{crop_id}.{img_path.split(".")[-1]}'
+                crop_path = os.path.join(dst_dir, crop_name)
+                fs.write_img(crop, crop_path)
+                crop_anno['img_path'] = crop_path
+            
+            crop_id += 1
+            
+            # add crop dataframe as result
             ret_df.append(crop_anno)    
+            
+        # return results or None if no crops occured
         if len(ret_df):
             return pd.concat(ret_df)
         else: 
@@ -257,5 +418,5 @@ def crop_components(df, dst_dir, base_labels=-1, lbl_col='anno_lbl', context=0,
         for path, df in tqdm(df.groupby('img_path'), desc='crop dataset'):
             crop_dfs.append(crop_and_recalculate(path, df))
     
-    # TODO: return empty df if noting to crop
+    # TODO: return empty df if nothing to crop
     return pd.concat(crop_dfs)
