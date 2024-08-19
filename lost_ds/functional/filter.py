@@ -43,7 +43,7 @@ def unique_labels(df, col='anno_lbl'):
     '''
     if is_multilabel(df=df, col=col):
         return np.unique(df[col].map(list).sum())
-    return list(df[col].unique())
+    return list(df[df[col].notna()][col].unique())
         
     
 def selection_mask(labels, df, col='anno_lbl'):

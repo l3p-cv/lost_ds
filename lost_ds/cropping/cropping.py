@@ -89,7 +89,9 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
         
         result_df = []
         for i, position in enumerate(positions):
-            crop_name = img_name + '_crop_' + str(i) + '.' + img_ending
+            crop_string = f'_shape_{crop_shape[0]}_{crop_shape[1]}'
+            overlap_string = f'_overlap_{overlap[0]}_{overlap[1]}'
+            crop_name = img_name + '_crop_' + str(i) + crop_string + overlap_string + '.' + img_ending
             crop_path = os.path.abspath(os.path.join(dst_dir, crop_name))
             crop_df = cropper.crop_anno(img_path, img_df, position, im_w, im_h, 
                                         padding)

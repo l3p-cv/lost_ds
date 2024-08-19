@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Changed
-- Your stuff here
+- fix bug in unique labels
+- add crop shape and overlap shape to filename when cropping ds
 
 ## [1.1.2] - 2024-01-30
 ### Changed
