@@ -27,13 +27,13 @@ def _get_and_validate_order(order, df, lbl_col, seg_lbl_col):
     
     if is_multilabel(df, lbl_col):
         # # remove dataset labels that do not occure in order
-        df[seg_lbl_col] = df[lbl_col].apply(lambda x: 
+        df[seg_lbl_col] = df[lbl_col].map(lambda x: 
             [lbl for lbl in x if lbl in list(order.keys())])
-        if df[seg_lbl_col].apply(lambda x: len(x) > 1).sum():
+        if df[seg_lbl_col].map(lambda x: len(x) > 1).sum():
             raise Exception('Found entries where multiple labels from order ' \
                 'are defined! Pass an order without multilabel classes and run again')
         else:
-            df[seg_lbl_col] = df[seg_lbl_col].apply(lambda x: 
+            df[seg_lbl_col] = df[seg_lbl_col].map(lambda x: 
                 x[0] if len(x) else np.nan)
     else:
         df[seg_lbl_col] = df[lbl_col]
@@ -137,5 +137,5 @@ def semantic_segmentation(order, dst_dir, fill_value, df, anno_dtypes=['polygon'
             path_map[p1] = p2
     
     
-    df[dst_path_col] = df.img_path.apply(lambda x: path_map[x])
+    df[dst_path_col] = df.img_path.map(lambda x: path_map[x])
     return df

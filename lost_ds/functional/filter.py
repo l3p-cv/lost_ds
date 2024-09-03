@@ -59,9 +59,9 @@ def selection_mask(labels, df, col='anno_lbl'):
     if not isinstance(labels, (list, np.ndarray)):
         labels = [labels]
     if is_multilabel(df, col):
-        # return df[col].apply(lambda x: 
+        # return df[col].map(lambda x: 
         #     bool(sum([l in list(x) for l in labels])))
-        return df[col].apply(lambda x: bool(len(np.intersect1d(x, labels))))
+        return df[col].map(lambda x: bool(len(np.intersect1d(x, labels))))
     else:
         return df[col].isin(labels)
 

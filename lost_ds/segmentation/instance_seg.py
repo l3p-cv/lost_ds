@@ -25,10 +25,10 @@
                 
 #     df = df[df['anno.dtype']=='polygon']
 #     # REPLACE pack/unpack:
-#     # df['anno.data'] = df['anno.data'].apply(lambda x: json.loads(x))
+#     # df['anno.data'] = df['anno.data'].map(lambda x: json.loads(x))
 #     # REPLACE pack/unpack:
-#     # df['anno.lbl.name'] = df['anno.lbl.name'].apply(lambda x: json.loads(x)[0])
-#     df['anno.lbl.name'] = df['anno.lbl.name'].apply(lambda x: x[0])
+#     # df['anno.lbl.name'] = df['anno.lbl.name'].map(lambda x: json.loads(x)[0])
+#     df['anno.lbl.name'] = df['anno.lbl.name'].map(lambda x: x[0])
 #     # TODO: rest of func with x instead of x[0] (label in list)
 #     df['mask.path'] = None
     
@@ -66,9 +66,9 @@
 #     px_mapping = pd.DataFrame(px_values)
 #     df = df.merge(px_mapping, on='anno.idx')
 #     # REPLACE pack/unpack:
-#     # df['anno.data'] = df['anno.data'].apply(lambda x: json.dumps(x))
+#     # df['anno.data'] = df['anno.data'].map(lambda x: json.dumps(x))
 #     # REPLACE pack/unpack:
-#     # df['anno.lbl.name'] = df['anno.lbl.name'].apply(lambda x: json.dumps([x]))
+#     # df['anno.lbl.name'] = df['anno.lbl.name'].map(lambda x: json.dumps([x]))
     
 #     if inplace:
 #         self.df = df

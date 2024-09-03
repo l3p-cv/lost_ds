@@ -103,7 +103,7 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
             
             if data_present.any() or write_empty:
                 crop_df['img_path'] = crop_path
-                crop_df['crop_position'] = crop_df['img_path'].apply(lambda x: crop_position)
+                crop_df['crop_position'] = crop_df['img_path'].map(lambda x: crop_position)
                 cropper.fs.write_img(crops[i], crop_path)
                 data_df = crop_df[data_present]
                 if write_empty:
@@ -134,7 +134,7 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
     # make anno_lbl* format compatible
     anno_keys = [k for k in ret_df.keys() if 'anno_lbl' in k]
     for k in anno_keys:
-        ret_df.loc[ret_df['anno_data'].isnull(), k] = ret_df[ret_df['anno_data'].isnull()][k].apply(lambda x: np.array([], 'object'))
+        ret_df.loc[ret_df['anno_data'].isnull(), k] = ret_df[ret_df['anno_data'].isnull()][k].map(lambda x: np.array([], 'object'))
 
     return ret_df
 
@@ -243,7 +243,7 @@ def crop_dataset(df, dst_dir, crop_shape=(500, 500), overlap=(0,0),
 #             crop_path = os.path.join(dst_dir, crop_name)
 #             fs.write_img(crop, crop_path)
 #             crop_anno['img_path'] = crop_path
-#             crop_anno['crop_position'] = crop_anno['img_path'].apply(lambda x: [minx, miny, maxx, maxy])
+#             crop_anno['crop_position'] = crop_anno['img_path'].map(lambda x: [minx, miny, maxx, maxy])
 #             crop_anno.loc[idx, center_lbl_key] = True
 #             ret_df.append(crop_anno)    
 #         if len(ret_df):
@@ -389,7 +389,7 @@ def crop_components(df, dst_dir=None, base_labels=-1, lbl_col='anno_lbl', contex
             # crop annotation
             crop_anno = cropper.crop_anno(img_path, img_df, crop_pos, im_w, im_h)
             crop_anno.loc[idx, center_lbl_key] = True
-            crop_anno['crop_position'] = crop_anno['img_path'].apply(lambda x: [minx, miny, maxx, maxy])
+            crop_anno['crop_position'] = crop_anno['img_path'].map(lambda x: [minx, miny, maxx, maxy])
             crop_anno['crop_id'] = crop_id
             
             # crop image and save it, add path to dataframe

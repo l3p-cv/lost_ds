@@ -18,10 +18,10 @@ def old_lds_to_new_lds(df):
 
     def parse_col(col):
         try:
-            return col.apply(lambda entry: literal_eval_parse(entry))
+            return col.map(lambda entry: literal_eval_parse(entry))
         except Exception as e:
             try:
-                return col.apply(lambda entry: json.loads(entry))
+                return col.map(lambda entry: json.loads(entry))
             except Exception as e:
                 return col
             
@@ -60,7 +60,7 @@ def old_lds_to_new_lds(df):
     # all_keys = list(mapping.values())
     # for k in all_keys:
     #     if 'timestamp' in k:
-    #         df_map[k] = df_map[k].apply(lambda x: str(x))
+    #         df_map[k] = df_map[k].map(lambda x: str(x))
     
     # transform anno data
     def parse_data(row):
@@ -98,7 +98,7 @@ def old_lds_to_new_lds(df):
     def _lbl_parser(lbl):
         if isinstance(lbl, str): return lbl.lower()
         else: return lbl
-    df_map['anno_lbl'] = df_map['anno_lbl'].apply(lambda x: [_lbl_parser(lbl) for lbl in x] if isinstance(x, list) else x)
+    df_map['anno_lbl'] = df_map['anno_lbl'].map(lambda x: [_lbl_parser(lbl) for lbl in x] if isinstance(x, list) else x)
     
     return LOSTDataset(df_map)
 

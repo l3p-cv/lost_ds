@@ -30,17 +30,17 @@
 #         order = {l: i for i, l in enumerate(self.get_unique_labels(lbl_col))}
 
 #     # unique image ids by img name
-#     df['panopt.image_id'] = df['img.img_path'].apply(lambda x: x.split('.')[0])
+#     df['panopt.image_id'] = df['img.img_path'].map(lambda x: x.split('.')[0])
 
 #     # polygon area per instance
-#     df['panopt.area'] = df.apply(lambda row: self._get_area(row), axis=1)
+#     df['panopt.area'] = df.map(lambda row: self._get_area(row), axis=1)
     
 #     # bbox per instance
-#     df['panopt.bbox'] = df['anno.data'].apply(
+#     df['panopt.bbox'] = df['anno.data'].map(
 #         lambda x: list(self._poly_to_bbox(x, bbox_format=bbox_format).values()))
 
 #     # category_id, class id, we want to map it with the train-pixel value
-#     df['panopt.category_id'] = df[lbl_col].apply(lambda x: order[x])
+#     df['panopt.category_id'] = df[lbl_col].map(lambda x: order[x])
     
 #     # segment id per image in coco format 
 #     df['panopt.id'] = None
@@ -59,7 +59,7 @@
 #     df['panopt.iscrowd'] = 0
 
 #     if val_format == 'abs':
-#         im_sizes = df['img.img_path'].apply(lambda x: np.array(get_image_size(x)))
+#         im_sizes = df['img.img_path'].map(lambda x: np.array(get_image_size(x)))
 
 #         def _area_to_abs(area):
 #             new_area = []

@@ -100,12 +100,12 @@ class LOSTDataset(object):
         if parse_keys:
             col_mapper = dict()
             for k in parse_keys:
-                self.df[k] = self.df[k].apply(_parse)
+                self.df[k] = self.df[k].map(_parse)
                 col_mapper[k] = k.replace('_lds_serialized', '')
             self.df.rename(col_mapper, axis=1, inplace=True)
             
         if 'anno_data' in self.df:
-            self.df['anno_data'] = self.df['anno_data'].apply(_parse)
+            self.df['anno_data'] = self.df['anno_data'].map(_parse)
         
             
     def to_parquet(self, path, df=None):

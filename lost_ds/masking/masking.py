@@ -75,7 +75,7 @@ def mask_dataset(df, dst_dir, masking_labels, mask_value=0, inverse=False,
     
     
     # remap new path
-    df[dst_col] = df['img_path'].apply(lambda x: 
+    df[dst_col] = df['img_path'].map(lambda x: 
         os.path.join(dst_dir, x.split('/')[-1]))
     
     return df 

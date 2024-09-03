@@ -29,7 +29,7 @@ def validate_unique_annos(df):
         pd.DataFrame: dataframe with validated empty images
     '''
     df = df.copy()
-    df['data_hash'] = df.anno_data.apply(lambda x: hash(str(x)))
+    df['data_hash'] = df.anno_data.map(lambda x: hash(str(x)))
     df = df.drop_duplicates(['img_path', 'data_hash'])
     return df.drop(labels='data_hash', axis='columns')
 
@@ -109,12 +109,12 @@ def validate_single_labels(df, lbl_col='anno_lbl', dst_col='my_lbl'):
     '''
     df = df.copy()
     if is_multilabel(df, lbl_col):
-        df[lbl_col] = df[lbl_col].apply(np.unique)
-        n_lbl = df[lbl_col].apply(len)
+        df[lbl_col] = df[lbl_col].map(np.unique)
+        n_lbl = df[lbl_col].map(len)
         if n_lbl.max() > 1:
             raise Exception('Found multilabels in {}. \n{}'.
                             format(lbl_col, df[n_lbl > 1][lbl_col]))
-        df[dst_col] = df[lbl_col].apply(lambda x: x[0] if len(x) else np.nan)
+        df[dst_col] = df[lbl_col].map(lambda x: x[0] if len(x) else np.nan)
     else:
         df[dst_col] = df[lbl_col]
     return df

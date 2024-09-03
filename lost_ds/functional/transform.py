@@ -71,7 +71,7 @@ from lost_ds.util import get_fs
 #     ###
 
 #     ### apply workflow
-#     # df.loc[df['anno_format'] == 'rel', ['anno_data', 'anno_format']] = df.loc[df['anno_format'] == 'rel', cols].apply(lambda x: make_abs(x, True), axis=1, result_type='expand')
+#     # df.loc[df['anno_format'] == 'rel', ['anno_data', 'anno_format']] = df.loc[df['anno_format'] == 'rel', cols].map(lambda x: make_abs(x, True), axis=1, result_type='expand')
 #     ###
     
 #     return df
@@ -103,7 +103,7 @@ def to_abs(df, path_col='img_path',
                 return (data.reshape((-1,2)) * xy).reshape(sh)
             else: 
                 return data
-        df['anno_data'] = df['anno_data'].apply(_abs)
+        df['anno_data'] = df['anno_data'].map(_abs)
         df['anno_format'] = 'abs'
         return df
     
@@ -203,7 +203,7 @@ def to_rel(df, path_col='img_path',
                 return (data.reshape((-1,2)) / xy).reshape(sh)
             else: 
                 return data
-        df['anno_data'] = df['anno_data'].apply(_rel)
+        df['anno_data'] = df['anno_data'].map(_rel)
         df['anno_format'] = 'rel'
         return df
     
@@ -275,9 +275,9 @@ def polygon_to_bbox(df, dst_style=None):
     if dst_style is None:
         dst_style = 'x1y1x2y2'
     polygons = df[df.anno_dtype == 'polygon']
-    df.loc[df.anno_dtype=='polygon', 'anno_data'] = polygons.anno_data.apply(
+    df.loc[df.anno_dtype=='polygon', 'anno_data'] = polygons.anno_data.map(
         lambda x: geom.poly_to_bbox(x, dst_style))
-    # df.loc[df.anno_dtype=='polygon', 'anno_data'] = polygons.anno_data.apply(
+    # df.loc[df.anno_dtype=='polygon', 'anno_data'] = polygons.anno_data.map(
     #     geom.poly_to_bbox, dst_style)
     columns = ['anno_style', 'anno_dtype']
     df.loc[df.anno_dtype=='polygon', columns] = [dst_style, 'bbox']
@@ -351,7 +351,7 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
     
     copy_process = list()
     if copy_path is None:
-        root_dirs = df['img_path'].apply(lambda x: '/'.join(x.split('/')[:-1])).unique()
+        root_dirs = df['img_path'].map(lambda x: '/'.join(x.split('/')[:-1])).unique()
         # assert len(root_dirs) == 1, f'COCO-Dataset images located in multiple different dirs {root_dirs}. ' \
         #     'You can use copy_path argument to copy the entire dataset.'
     else:

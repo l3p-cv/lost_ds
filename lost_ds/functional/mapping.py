@@ -21,10 +21,10 @@ def remap_img_path(df, new_root_path, col='img_path', mode='replace'):
     """
     df = df.copy()
     if mode == 'replace':
-        df.loc[:, col] = df[col].apply(lambda x: 
+        df.loc[:, col] = df[col].map(lambda x: 
                 os.path.join(new_root_path, os.path.basename(x)))
     elif mode == 'prepend':
-        df.loc[:, col] = df[col].apply(lambda x: os.path.join(new_root_path, x))
+        df.loc[:, col] = df[col].map(lambda x: os.path.join(new_root_path, x))
     else:
         raise Exception(NotImplementedError)
     return df
@@ -53,8 +53,8 @@ def remap_labels(df, label_mapping,  col='anno_lbl', dst_col='anno_lbl_mapped'):
         if not l in label_mapping.keys():
             label_mapping[l] = l
     if is_multilabel(df, dst_col):
-        df[dst_col] = df[dst_col].apply(lambda x: 
+        df[dst_col] = df[dst_col].map(lambda x: 
             [label_mapping[l] for l in x if not label_mapping[l] is None])
     else:
-        df[dst_col] = df[dst_col].apply(lambda x: label_mapping[x])
+        df[dst_col] = df[dst_col].map(lambda x: label_mapping[x])
     return df

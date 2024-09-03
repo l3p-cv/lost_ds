@@ -20,7 +20,7 @@ def prep_parquet(df, try_serialize_objects=False):
     geom = LOSTGeometries()
     store_df = df.copy()
     if 'anno_data' in df.keys():
-        store_df.anno_data = store_df.anno_data.apply(lambda x: 
+        store_df.anno_data = store_df.anno_data.map(lambda x: 
             geom.serializable(x))
     
     # HACK: If data of different dimensions is provided pyarrow wont serialize without errors
@@ -32,7 +32,7 @@ def prep_parquet(df, try_serialize_objects=False):
             try:
                 pa.table(store_df[[k]])
             except pa.ArrowInvalid:
-                store_df[k] = store_df[k].apply(lambda x: geom.serializable(x))
+                store_df[k] = store_df[k].map(lambda x: geom.serializable(x))
                 try:
                     pa.table(store_df[[k]])
                 except:

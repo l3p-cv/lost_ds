@@ -46,7 +46,7 @@ def split_train_test(test_size=0.2, val_size=0.2, stratify_col=None, df=None,
     df_base = df.copy()
     if not len(df_base):
         return df_base, df_base, df_base
-    df_base['split_col'] = df_base[col].apply(lambda x: hash(str(x)))
+    df_base['split_col'] = df_base[col].map(lambda x: hash(str(x)))
     samples = df_base['split_col'].unique()
     n = len(samples)
     stratify = None
@@ -168,7 +168,7 @@ def split_train_test_multilabel(stratify_col, test_size=0.2, val_size=0.2, df=No
     if not len(multi_lbl_df):
         print("Return empty splits")
         return multi_lbl_df, multi_lbl_df, multi_lbl_df
-    multi_lbl_df['split_col'] = multi_lbl_df[col].apply(lambda x: hash(str(x)))
+    multi_lbl_df['split_col'] = multi_lbl_df[col].map(lambda x: hash(str(x)))
     samples = multi_lbl_df['split_col'].unique()    
     n = len(samples)
     ids = np.array(list(range(n)))
@@ -262,10 +262,10 @@ def split_multilabels(lbl_mapping, df:pd.DataFrame=None, col='anno_lbl'):
             assert lbl in ret
         return ret
     
-    df[categories] = pd.DataFrame(list(df[col].apply(
+    df[categories] = pd.DataFrame(list(df[col].map(
         lambda x: split_labels(x))), columns=categories, index=df.index)
     
     # TODO: continue implementation
-    # df[categories] = df[col].apply(split_labels, axis=1, result_type='expand')
+    # df[categories] = df[col].map(split_labels, axis=1, result_type='expand')
     
     return df
