@@ -290,7 +290,11 @@ def polygon_to_bbox(df, dst_style=None):
 def to_coco(df, remove_invalid=True, lbl_col='anno_lbl', 
             predef_img_mapping:dict=None,
             predef_lbl_mapping:dict=None,
-            supercategory_mapping=None, copy_path=None, rename_by_index=False,
+            supercategory_mapping=None, 
+            copy_path=None, 
+            copy_images=False, 
+            link_images=True, 
+            rename_by_index=True,
             json_path=None,
             filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None):
     """Transform dataset to coco data format
@@ -303,8 +307,11 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
         lbl_col (str, optional): dataframe column to look for labels. Defaults to 'anno_lbl'.
         supercategory_mapping ([dict], optional): dict like mapping for supercategories ({class: superclass}). 
             Defaults to None.
-        copy_path (str, optional): copy all images to given directory
-        rename_by_index (bool, optional): rename files by index to assure unique filenames
+        copy_path (str, optional): output directory to copy or link images
+        copy_images (bool, optional): copy images if True
+        link_images (bool, optional): symlink images instead of copy if True
+        rename_by_index (bool, optional): rename files by index with pattern 
+            {img_id:012d}-{file_base}.{file_ending} to assure unique filenames
         json_path (str, optional): store coco annotations as .json file 
         filesystem (Union[FileMan, fsspec.AbstractFileSystem], optional): Filesystem instance. 
             Defaults to None.
@@ -356,15 +363,19 @@ def to_coco(df, remove_invalid=True, lbl_col='anno_lbl',
         im_h, im_w = get_imagesize(img_path)
         filename = img_path.split('/')[-1]
         if copy_path is not None:
-            file_ending = img_path.split('.')[-1]
             if rename_by_index:
-                filename = f'{img_id:012d}.{file_ending}'
+                file_ending = img_path.split('.')[-1]
+                file_base = filename.split('.')[0]
+                filename = f'{img_id:012d}-{file_base}.{file_ending}'
             dst_file = os.path.join(copy_path, filename)
             # if not filesystem.exists(dst_file):
             # p = Process(target=filesystem.copy, args=(img_path, dst_file,), daemon=True)
-            p = Thread(target=filesystem.copy, args=(img_path, dst_file,), daemon=True)
-            copy_process.append(p)
-            p.start()
+            if copy_images:
+                p = Thread(target=filesystem.copy, args=(img_path, dst_file,), daemon=True)
+                copy_process.append(p)
+                p.start()
+            elif link_images: 
+                os.symlink(img_path, dst_file)
             
         imgs.append({"org_path": img_path,      # custom
                      "id": img_id,              # int, 
