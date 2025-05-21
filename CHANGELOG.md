@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Changed
+- switched package build system to uv
 - fix bug in unique labels
 - add crop shape and overlap shape to filename when cropping ds
 
