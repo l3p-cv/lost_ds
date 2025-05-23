@@ -4,9 +4,6 @@ stages:
 - test-lost_ds
 - release-lost_ds
 
-variables:
-  LOST_DS_VERSION: $CI_PIPELINE_ID
-  
 test-lost_ds:
   stage: test-lost_ds
   script:
@@ -16,6 +13,8 @@ test-lost_ds:
     - if: '$CI_COMMIT_TAG =~ /.*/'
 
 release-lost_ds:
+  variables:
+    UV_PUBLISH_TOKEN: $TWINE_PASSWORD
   stage: release-lost_ds
   script:
     - sed -i 's/version = "0.0.0-alpha.0"/version = "'"$CI_COMMIT_TAG"'"/' pyproject.toml
@@ -24,9 +23,5 @@ release-lost_ds:
     - uvx --from=toml-cli toml set --toml-path pyproject.toml project.version ${CI_COMMIT_TAG}
     - uv build
     - uv publish
-    - sed -i 's/version="donotchange"/version="'"$CI_COMMIT_TAG"'"/' setup.py
-    - pip install -U twine build
-    - python -m build
-    - twine upload dist/*
   only:
     - tags
