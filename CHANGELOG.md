@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Changed
-- Your stuff here
+- fixed to_coco storing error
 
 ## [1.2.0] - 2025-05-28
 ### Changed
