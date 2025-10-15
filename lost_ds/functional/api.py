@@ -1,7 +1,8 @@
 from lost_ds.functional.split import (split_by_empty,
                                      split_by_img_path,
                                      split_multilabels,
-                                     split_train_test
+                                     split_train_test,
+                                     split_stratified
                                      )
 
 from lost_ds.functional.filter import (remove_empty,
