@@ -3,7 +3,6 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 from lost_ds.functional.filter import img_selection, label_selection
-from iterstrat.ml_stratifiers import MultilabelStratifiedShuffleSplit
 from sklearn.preprocessing import MultiLabelBinarizer
 
 
@@ -109,6 +108,95 @@ def split_train_test(test_size=0.2, val_size=0.2, stratify_col=None, df=None,
     return tuple(splits)
 
 
+def split_stratified(train_size=0.6, test_size=0.2, val_size=0.2, 
+                     df=None,
+                     img_uid_col='img_path',
+                     stratify_col='stratify',
+                     ensure_one_sample=True,
+                     random_state=42
+                     ):
+    """Splits dataframe into train, test and val datasets considering stratification.
+    
+    Args:
+        train_size (float): Value between 0.0 and 1.0 describing how much data is used for the test set.
+            Defaults to 0.6
+        test_size (float): Value between 0.0 and 1.0 describing how much data is used for the test set.
+            Defaults to 0.2
+        df (pd.DataFrame): The data to split
+        val_size (float): same as test_size, but for the validation set
+        img_uid_col (str): Column to identify a unique image in order not to select the same image for different splits. Defaults to img_path.
+        stratify_col (str): Column containing ids that are supposed to be equally distributed across the splits w.r.t. the split sizes.
+        ensure_one_sample (bool): relevant for stratification ids occuring <= 3 times. Ensures to put at least one sample into every split 
+        even if the calculated split size would suggest different
+        random_state(int): random state for reproducable random results
+        
+        random_state (int): Seed for random operations.
+            Defaults to 42
+    
+    Returns:
+        The created splits as a tuple
+    """
+    
+    df_base = df.copy()
+    
+    # make sure ever image is considered only one time
+    df = df.copy().drop_duplicates(img_uid_col)
+    
+    ratios = {'train': train_size, 'val': val_size, 'test': test_size}
+    splits = {'train': [], 'val': [], 'test': []}
+    min_sample = 1 if ensure_one_sample else 0
+    
+    # apply stratification
+    rng = np.random.default_rng(random_state)
+    for variant, group in df.groupby(stratify_col):
+        group = group.sample(frac=1, random_state=random_state).reset_index(drop=True)
+        n = len(group)
+
+        if n >= 3:
+            # split the variant into train/test/val
+            # keep min. 1 sample in each split if ensure_one_sample
+            # usefull for samples occuring only 3 times
+            n_train = max(min_sample, int(np.floor(n * ratios['train'])))
+            n_val   = max(min_sample, int(np.floor(n * ratios['val'])))
+            n_test  = max(min_sample, n - n_train - n_val)
+            
+        elif n == 2:
+            # 1 train, 1 test
+            n_train, n_val, n_test = 1, 0, 1
+        
+        else:
+            # n == 1 --> random split
+            choice = rng.choice(['train', 'val', 'test'], p=[0.6, 0.2, 0.2])
+            n_train = n_val = n_test = 0
+            if choice == 'train':
+                n_train = 1
+            elif choice == 'val':
+                n_val = 1
+            else:
+                n_test = 1
+
+        # apply split
+        start_train = 0
+        end_train = start_train + n_train
+        end_val = end_train + n_val
+        end_test = end_val + n_test
+        splits['train'].append(group.iloc[start_train:end_train])
+        splits['val'].append(group.iloc[end_train:end_val])
+        splits['test'].append(group.iloc[end_val:end_test])
+
+    # concat split info
+    df_train = pd.concat(splits['train']).reset_index(drop=True)
+    df_val   = pd.concat(splits['val']).reset_index(drop=True)
+    df_test  = pd.concat(splits['test']).reset_index(drop=True)
+
+    # apply split to base dataframe
+    ds_train_final = df_base[df_base[img_uid_col].isin(df_train[img_uid_col])]
+    ds_test_final = df_base[df_base[img_uid_col].isin(df_test[img_uid_col])]
+    ds_val_final = df_base[df_base[img_uid_col].isin(df_val[img_uid_col])]
+
+    return ds_train_final, ds_test_final, ds_val_final
+
+
 def create_multilabel_data(df, anno_col='anno_lbl', mult_col='mult_lbl', single_lbls='single_lbl'):
     """Creates a column with multilabel data and drops unique image-paths"""
     unique_img_df = df.drop_duplicates('img_path')
@@ -145,6 +233,7 @@ def split_train_test_multilabel(stratify_col, test_size=0.2, val_size=0.2, df=No
         The created splits as a tuple
     """
     from lost_ds.functional.validation import validate_single_labels # HACK: prevent circular import
+    from iterstrat.ml_stratifiers import MultilabelStratifiedShuffleSplit
     df_base = df.copy()
 
     # check nr of splits

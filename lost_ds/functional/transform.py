@@ -21,61 +21,6 @@ from lost_ds.functional.filter import is_multilabel, unique_labels
 from lost_ds.util import get_fs
 
         
-# def to_abs(df, path_col='img_path', 
-#            filesystem:Union[FileMan,fsspec.AbstractFileSystem]=None, 
-#            verbose=True, parallel=-1):
-#     ''' Transform all annos to absolute annos
-    
-#     Args:
-#         df (pd.DataFrame): dataframe to transform
-#         filesystem (fsspec.filesystem, FileMan): filesystem to use. Use local
-#             if not initialized
-#         verbose (bool): print tqdm progress-bar
-            
-#     Returns:
-#         pd.DataFrame: transformed dataframe wil absolute annotations
-#     '''
-#     df = df.copy()
-#     df_rel = df[df['anno_format'] == 'rel']
-#     cols = [path_col, 'anno_data', 'anno_dtype', 'anno_format']
-#     def make_abs(row):
-#         anno_data = row.anno_data
-#         anno_format = row.anno_format
-#         if isinstance(anno_data, np.ndarray) and anno_format=='rel':
-#             geom = LOSTGeometries()
-#             img_path = row[path_col]
-#             anno_dtype = row.anno_dtype
-#             img_shape = get_imagesize(img_path, filesystem)
-#             anno_data = geom.to_abs(
-#                 anno_data, anno_dtype, anno_format, img_shape
-#                 )    
-#         return anno_data
-    
-#     ### joblib workflow
-#     if parallel:
-#         abs_data = Parallel(parallel)(delayed(make_abs)(row)
-#                                 for idx, row in tqdm(df_rel[cols].iterrows(), 
-#                                                     total=len(df_rel),
-#                                                     desc='to abs', 
-#                                                     disable=(not verbose)))
-#     else:
-#         abs_data = list()
-#         for idx, row in tqdm(df_rel[cols].iterrows(), total=len(df_rel),
-#                             desc='to abs', disable=(not verbose)):
-#             abs_data.append(make_abs(row))
-            
-#     df.loc[df['anno_format'] == 'rel', 'anno_data'] = pd.Series(abs_data, 
-#                                                                 index=df_rel.index,
-#                                                                 dtype=object)
-#     df.loc[df['anno_format'] == 'rel', 'anno_format'] = 'abs'
-#     ###
-
-#     ### apply workflow
-#     # df.loc[df['anno_format'] == 'rel', ['anno_data', 'anno_format']] = df.loc[df['anno_format'] == 'rel', cols].map(lambda x: make_abs(x, True), axis=1, result_type='expand')
-#     ###
-    
-#     return df
-
 def to_abs(df, path_col='img_path', 
            filesystem:Union[FileMan,fsspec.AbstractFileSystem]=None, 
            verbose=True, parallel=-1):
@@ -124,56 +69,6 @@ def to_abs(df, path_col='img_path',
     abs_dfs.append(df[df['anno_format']!='rel'])
     df_abs = pd.concat(abs_dfs)
     return df_abs
-
-
-# def to_rel(df, path_col='img_path', 
-#            filesystem: Union[FileMan, fsspec.AbstractFileSystem] = None,
-#            verbose=True, parallel=-1):
-#     ''' Transform all annos to absolute annos
-    
-#     Args:
-#         df (pd.DataFrame): dataframe to transform
-#         filesystem (FileMan): Filesystem instance. If None local filesystem 
-#             is used
-#         verbose (bool): print tqdm progress-bar
-            
-#     Returns:
-#         pd.DataFrame: transformed dataframe wil absolute annotations
-#     '''
-#     df = df.copy()
-#     df_abs = df[df['anno_format'] == 'abs']
-#     cols = [path_col, 'anno_data', 'anno_dtype', 'anno_format']
-#     def make_rel(row):
-#         anno_data = row.anno_data
-#         anno_format = row.anno_format
-#         if isinstance(anno_data, np.ndarray) and anno_format == 'abs':
-#             geom = LOSTGeometries()
-#             img_path = row[path_col]
-#             anno_dtype = row.anno_dtype
-#             img_shape = get_imagesize(img_path, filesystem)
-#             anno_data = geom.to_rel(
-#                 anno_data, anno_dtype, anno_format, img_shape
-#             )
-#         return anno_data
-    
-#     if parallel:
-#         rel_data = Parallel(parallel)(delayed(make_rel)(row) 
-#                                 for idx, row in tqdm(df_abs[cols].iterrows(), 
-#                                                     total=len(df_abs),
-#                                                     desc='to rel',
-#                                                     disable=(not verbose)))
-#     else:
-#         rel_data = list()
-#         for idx, row in tqdm(df_abs[cols].iterrows(), total=len(df_abs),
-#                              desc='to rel',disable=(not verbose)):
-#             rel_data.append(make_rel(row))
-            
-#     df.loc[df['anno_format'] == 'abs', 'anno_data'] = pd.Series(rel_data, 
-#                                                                 index=df_abs.index,
-#                                                                 dtype=object)
-#     df.loc[df['anno_format'] == 'abs', 'anno_format'] = 'rel'
-    
-#     return df
 
 
 def to_rel(df, path_col='img_path', 

@@ -14,7 +14,8 @@ from lost_ds.functional.split import (split_by_empty,
                                       split_by_img_path,
                                       split_train_test,
                                       split_train_test_multilabel,
-                                      split_multilabels)
+                                      split_multilabels,
+                                      split_stratified)
 
 from lost_ds.functional.filter import (remove_empty,
                                        ignore_labels,
@@ -524,6 +525,28 @@ class LOSTDataset(object):
         df = self._get_df(df)
         return split_train_test(test_size=test_size, val_size=val_size, 
                                 stratify_col=stratify_col, df=df, col=col,
+                                random_state=random_state)
+    
+    def split_stratified(self, train_size=0.6, test_size=0.2, val_size=0.2, stratify_col=None, 
+                         df=None, img_uid_col='img_path', random_state=42):
+        '''Split dataset based on img paths (for dataset with multiple 
+            entries for one image)
+        Args:
+            test_size (float): fraction of images in df that will be used for 
+                test dataset
+            val_size (float): fraction of images in df that will be used for 
+                test dataset
+            stratify_col (str): column to use for stratify split
+            df (pd.DataFrame): Dataframe to split
+        Returns: 
+            tuple: pd.DataFrames with dataframe split (train, test, val).
+            if a size is 0.0 it will return None at the according place
+        '''
+        df = self._get_df(df)
+        return split_stratified(train_size=train_size, test_size=test_size, 
+                                val_size=val_size, df=df, 
+                                img_uid_col=img_uid_col, 
+                                stratify_col=stratify_col, 
                                 random_state=random_state)
         
     def split_train_test_multilabel(self, stratify_col, test_size=0.2, val_size=0.2, df=None,
