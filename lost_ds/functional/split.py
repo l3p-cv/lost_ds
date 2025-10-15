@@ -115,6 +115,27 @@ def split_stratified(train_size=0.6, test_size=0.2, val_size=0.2,
                      ensure_one_sample=True,
                      random_state=42
                      ):
+    """Splits dataframe into train, test and val datasets considering stratification.
+    
+    Args:
+        train_size (float): Value between 0.0 and 1.0 describing how much data is used for the test set.
+            Defaults to 0.6
+        test_size (float): Value between 0.0 and 1.0 describing how much data is used for the test set.
+            Defaults to 0.2
+        df (pd.DataFrame): The data to split
+        val_size (float): same as test_size, but for the validation set
+        img_uid_col (str): Column to identify a unique image in order not to select the same image for different splits. Defaults to img_path.
+        stratify_col (str): Column containing ids that are supposed to be equally distributed across the splits w.r.t. the split sizes.
+        ensure_one_sample (bool): relevant for stratification ids occuring <= 3 times. Ensures to put at least one sample into every split 
+        even if the calculated split size would suggest different
+        random_state(int): random state for reproducable random results
+        
+        random_state (int): Seed for random operations.
+            Defaults to 42
+    
+    Returns:
+        The created splits as a tuple
+    """
     
     df_base = df.copy()
     
