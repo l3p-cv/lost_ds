@@ -1,5 +1,7 @@
 from lost_ds.geometry.api import LOSTGeometries
 
+from lost_ds.analytics.api import compute_mean_std
+
 from lost_ds.functional.api import(remove_empty,
                                    split_by_empty,
                                    split_by_img_path,

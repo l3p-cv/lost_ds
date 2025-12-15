@@ -4,6 +4,8 @@ import pandas as pd
 from lost_ds.io.file_man import FileMan
 from lost_ds.geometry.api import LOSTGeometries
 
+from lost_ds.analytics.statistics import compute_mean_std
+
 from lost_ds.functional.validation import (validate_geometries,
                                            validate_empty_images,
                                            validate_unique_annos,
@@ -1020,3 +1022,25 @@ class LOSTDataset(object):
         df = mask_dataset(df, dst_dir, masking_labels, mask_value, inverse, 
                           lbl_col, dst_col, self.fileman, parallel=parallel)
         return self._update_inplace(df, inplace)
+    
+
+    #
+    #   Analytics / Statistics
+    #
+
+    def compute_mean_std(self, img_col='img_path', sample_size=None, df=None, parallel=-1):
+        """
+        Calculate channel-wise mean and std over all dataset images.
+        
+        Args:
+            img_col: dataframe key containing image paths
+            sample_size: only use n images
+            df: pd.DataFrame containing image paths
+            parallel: amount processes (-1 = all CPU-cores, 0 = sequential)
+
+        Returns:
+            (mean, std): np.array with 3 values each (B, G, R)
+        """
+        df = self._get_df(df)
+        return compute_mean_std(df, img_col, sample_size, parallel)
+    
