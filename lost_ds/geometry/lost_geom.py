@@ -156,8 +156,9 @@ class LOSTGeometries:
             image with segmentation drawn
         '''
         geom = self._get_geometry(anno_dtype)
-        segmentation = geom.segmentation(segmentation, color, anno_data, 
-                                         anno_format, anno_style, **kwargs)
+        if geom is not None:
+            segmentation = geom.segmentation(segmentation, color, anno_data, 
+                                            anno_format, anno_style, **kwargs)
         return segmentation
     
     
