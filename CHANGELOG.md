@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - consolidated segmentation modules: `semantic_seg.py` and commented-out legacy files (`instance_seg.py`, `panoptic_seg.py`) replaced by unified `segmentation.py`
 ### Removed
 - removed `instance_seg.py` and `panoptic_seg.py` (contained only commented-out legacy code)
-
+### Fixed
+- `split_stratified` now takes rarest label per image for better stratification results
 
 ## [1.2.0] - 2025-05-28
 ### Changed

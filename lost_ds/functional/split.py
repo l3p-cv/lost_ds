@@ -136,19 +136,34 @@ def split_stratified(train_size=0.6, test_size=0.2, val_size=0.2,
     Returns:
         The created splits as a tuple
     """
-    
+    from lost_ds.functional.validation import validate_empty_images
     df_base = df.copy()
-    
-    # make sure ever image is considered only one time
-    df = df.copy().drop_duplicates(img_uid_col)
-    
+    df_base = validate_empty_images(df_base)
+
+    # Build a per-image representative dataframe for stratification.
+    # Instead of drop_duplicates (which keeps only the first – often empty –
+    # base row), pick one row per image: the row whose label is the rarest in
+    # the whole dataset.  For truly empty images (no annotations, slbl=None)
+    # the single base row is kept as-is so they still participate in the split.
+    lbl_counts = df_base[stratify_col].value_counts()
+
+    def pick_representative_row(grp):
+        valid = grp[grp[stratify_col].notna()]
+        if valid.empty:
+            return grp.iloc[[0]]  # genuinely empty image – keep base row
+        rarest_idx = valid[stratify_col].map(lambda l: lbl_counts.get(l, 0)).idxmin()
+        return grp.loc[[rarest_idx]]
+
+    df = df_base.groupby(img_uid_col, group_keys=False).apply(pick_representative_row)
+
     ratios = {'train': train_size, 'val': val_size, 'test': test_size}
     splits = {'train': [], 'val': [], 'test': []}
     min_sample = 1 if ensure_one_sample else 0
     
-    # apply stratification
+    # apply stratification; dropna=False so genuinely empty images (slbl=None)
+    # form their own group and are distributed proportionally across splits
     rng = np.random.default_rng(random_state)
-    for variant, group in df.groupby(stratify_col):
+    for variant, group in df.groupby(stratify_col, dropna=False):
         group = group.sample(frac=1, random_state=random_state).reset_index(drop=True)
         n = len(group)
 
