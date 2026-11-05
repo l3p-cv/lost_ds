@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - compute_mean_std to calculate datasets mean and std to use for normalization
 - `instance_segmentation()`: new function to generate panoptic instance segmentation masks (RGB encoding, incl. `segments_info` metadata per image)
 - helper functions `id_to_rgb` / `rgb_to_id` for instance ID ↔ RGB color conversion
+- Added pathlib to check suffix for extension of the file instead of checking substring in the file path.
 ### Changed
 - consolidated segmentation modules: `semantic_seg.py` and commented-out legacy files (`instance_seg.py`, `panoptic_seg.py`) replaced by unified `segmentation.py`
 ### Removed

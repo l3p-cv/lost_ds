@@ -1,3 +1,4 @@
+from pathlib import Path
 import fsspec, cv2
 import shutil
 import pandas as pd 
@@ -126,9 +127,9 @@ class FileMan(object):
     
     def _get_dstype(self, path):
         supported_types = ['csv', 'parquet']
-        for t in supported_types:
-            if t in path: 
-                return t
+        ext = Path(path).suffix.lower().lstrip('.')
+        if ext in supported_types:
+            return ext
         raise ValueError('Datatype of {} not supported!'.format(path))
     
     
