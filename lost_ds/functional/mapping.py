@@ -4,7 +4,7 @@ from lost_ds.functional.filter import (is_multilabel,
                                       unique_labels,)
 
 
-def remap_img_path(df, new_root_path, col='img_path', mode='replace'):
+def remap_img_path(df, new_root_path, col='img_path', mode='replace', name_map=None):
     """Remap image paths e.g. for environmental changes
 
     Args:
@@ -15,14 +15,23 @@ def remap_img_path(df, new_root_path, col='img_path', mode='replace'):
             If 'replace' the path before the filename will be replaced by new_root_path.
             If 'prepend' new_root_path will be prepended to existing path.
             Defaults to 'replace'.
+        name_map (dict, optional): Mapping of original source path to destination
+            relative filename as returned by :func:`lost_ds.copy._make_dst_names`.
+            When provided, the destination filename is looked up from this map
+            instead of using ``os.path.basename``, ensuring the dataframe paths
+            stay consistent with the actual filenames written (important when two
+            images from different directories share the same basename).
+            Defaults to None.
 
     Returns:
         pd.DataFrame: Dataframe with remapped path
     """
     df = df.copy()
     if mode == 'replace':
-        df.loc[:, col] = df[col].map(lambda x: 
-                os.path.join(new_root_path, os.path.basename(x)))
+        def resolve(x):
+            dst_name = name_map[x] if name_map and x in name_map else os.path.basename(x)
+            return os.path.join(new_root_path, dst_name)
+        df.loc[:, col] = df[col].map(resolve)
     elif mode == 'prepend':
         df.loc[:, col] = df[col].map(lambda x: os.path.join(new_root_path, x))
     else:
