@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - removed `instance_seg.py` and `panoptic_seg.py` (contained only commented-out legacy code)
 ### Fixed
 - `split_stratified` now takes rarest label per image for better stratification results
+- `file_map.py` : Fixed file extension check issue during pipeline creation,Added pathlib to check suffix for extension of the file instead of checking substring in the file path.
 -  Fixed filename collision in exports lost(copy.py, mapping.py): images sharing the same basename from different directories are now exported into parent-named subdirectories instead of overwriting each other
 
 ## [1.2.0] - 2025-05-28
